@@ -15,6 +15,11 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Implements\" />
+    <Folder Include="Interfaces\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
