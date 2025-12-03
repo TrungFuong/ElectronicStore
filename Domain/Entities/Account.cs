@@ -8,6 +8,9 @@ namespace Domain.Entities
         [Key]
         public string AccountId { get; set; }
         [Required]
+        [MaxLength(20)]
+        public string Phone { get; set; }
+        [Required]
         [MaxLength(200)]
         //pw lưu thì phải mã hóa
         public string HashPassword { get; set; }
@@ -18,10 +21,10 @@ namespace Domain.Entities
         public EnumRole Role { get; set; } = 0;
         [Required]
         public bool IsActive { get; set; } = true;
-        public string CustomerId { get; set; }
-        public Customer Customer { get; set; }
-        public string StaffId { get; set; }
-        public Staff Staff { get; set; }
+        public string? CustomerId { get; set; }
+        public Customer? Customer { get; set; }
+        public string? StaffId { get; set; }
+        public Staff? Staff { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

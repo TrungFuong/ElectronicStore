@@ -15,6 +15,6 @@ namespace Domain.Constants
         public const string PRODUCT_ID_PREFIX = "PRD";
         public const string ORDER_ID_PREFIX = "ORD";
         public const string DISCOUNT_ID_PREFIX = "DSC";
-        public const string ID_FORMAT = "{0, D4}";
+        public const string ID_FORMAT = "{0:D4}";
     }
 }
