@@ -17,6 +17,7 @@ namespace Infrastructure.Repositories
         {
             _context = context;
         }
+
         public async Task<Account?> GetByPhoneAsync(string phone)
         {
             var all = await _context.Accounts.ToListAsync();
@@ -30,6 +31,7 @@ namespace Infrastructure.Repositories
                 .Include(a => a.Staff)
                 .FirstOrDefaultAsync(a => a.Phone == phone);
         }
+
         public async Task<Account?> GetWithRefreshTokensAsync(string accountId)
         {
             return await _context.Accounts

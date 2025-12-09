@@ -9,6 +9,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+//Generic Repository Pattern
+//T: Entity Type
+//Cung cấp các phương thức chung để thao tác với các thực thể trong cơ sở dữ liệu
+
+//Interface: Chúng nó làm gì
+//Abstract Class: Chúng nó là gì
+
 namespace Infrastructure.Repositories
 {
     public class GenericRepository<T> : IGenericsRepository<T> where T : class
@@ -41,8 +48,6 @@ namespace Infrastructure.Repositories
             }
             return await query.ToListAsync();
         }
-
-
 
         public async Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>> filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null, int pageSize = 10)
         {

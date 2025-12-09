@@ -12,6 +12,7 @@ using Application.DTOs.Requests;
 
 namespace Application.Interfaces
 {
+
     public interface IAuthService
     {
         //Đăng ký
