@@ -21,7 +21,7 @@ namespace Application.Interfaces
         Task<LoginResponse> LoginAsync(LoginRequest request);
 
         //Làm mới token
-        Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request);
+        Task<RefreshTokenResponse> RefreshTokenAsync(string token);
 
         //Đăng xuất (revoke token)
         Task<bool> LogoutAsync(string refreshToken);

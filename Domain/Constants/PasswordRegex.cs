@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Constants
 {
-    public class Regex
+    public class PasswordRegex
     {
         public const string PASSWORD = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$";
     }

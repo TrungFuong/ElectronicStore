@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class IniCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -127,12 +127,13 @@ namespace Infrastructure.Migrations
                 columns: table => new
                 {
                     AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     HashPassword = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Salt = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CustomerId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StaffId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    CustomerId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    StaffId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -178,6 +179,8 @@ namespace Infrastructure.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ExpireAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsRevoked = table.Column<bool>(type: "bit", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReplacedByToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
@@ -185,6 +188,26 @@ namespace Infrastructure.Migrations
                     table.PrimaryKey("PK_RefreshTokens", x => x.TokenId);
                     table.ForeignKey(
                         name: "FK_RefreshTokens_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tokens",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    HashToken = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tokens_Accounts_AccountId",
                         column: x => x.AccountId,
                         principalTable: "Accounts",
                         principalColumn: "AccountId",
@@ -320,7 +343,8 @@ namespace Infrastructure.Migrations
                 name: "IX_Accounts_StaffId",
                 table: "Accounts",
                 column: "StaffId",
-                unique: true);
+                unique: true,
+                filter: "[StaffId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Customers_AccountId",
@@ -373,6 +397,11 @@ namespace Infrastructure.Migrations
                 name: "IX_RefreshTokens_AccountId",
                 table: "RefreshTokens",
                 column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tokens_AccountId",
+                table: "Tokens",
+                column: "AccountId");
         }
 
         /// <inheritdoc />
@@ -389,6 +418,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");
+
+            migrationBuilder.DropTable(
+                name: "Tokens");
 
             migrationBuilder.DropTable(
                 name: "Discounts");

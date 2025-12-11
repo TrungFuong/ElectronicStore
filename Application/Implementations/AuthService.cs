@@ -100,9 +100,43 @@ namespace Application.Implementations
             throw new NotImplementedException();
         }
 
-        public Task<RefreshTokenResponse> RefreshTokenAsync(RefreshTokenRequest request)
+        public async Task<RefreshTokenResponse> RefreshTokenAsync(string token)
         {
-            throw new NotImplementedException();
+            var oldToken = await _unitOfWork.RefreshTokenRepository.GetByTokenAsync(token);
+
+            if (oldToken == null)
+                throw new Exception("Refresh token không tồn tại.");
+
+            if (oldToken.IsRevoked)
+                throw new Exception("Refresh token đã bị thu hồi.");
+
+            if (oldToken.ExpireAt <= DateTime.UtcNow)
+                throw new Exception("Refresh token đã hết hạn.");
+
+            if (oldToken.Account == null || !oldToken.Account.IsActive)
+                throw new Exception("Tài khoản không hợp lệ hoặc đã bị vô hiệu hóa.");
+
+            //Tạo refresh token mới
+            var newRefresh = _tokenService.GenerateRefreshToken(oldToken.AccountId);
+            oldToken.IsRevoked = true;
+            oldToken.RevokedAt = DateTime.UtcNow;
+            oldToken.ReplacedByToken = newRefresh.Token;
+
+            await _unitOfWork.RefreshTokenRepository.AddAsync(newRefresh);
+
+            await _unitOfWork.CommitAsync();
+
+            //Tạo access token mới
+            var accessToken = _tokenService.GenerateAccessToken(oldToken.Account);
+
+            return new RefreshTokenResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = newRefresh.Token,
+                AccessTokenExpireAt = DateTime.UtcNow.AddMinutes(
+                    int.Parse(_config["JwtSettings:AccessTokenExpiryMinutes"])
+                )
+            };
         }
 
         public async Task<bool> RegisterAsync(RegisterRequest request)
