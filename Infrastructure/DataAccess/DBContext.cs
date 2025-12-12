@@ -39,7 +39,6 @@ namespace Infrastructure.DataAccess
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<Staff> Staffs { get; set; } = null!;
-        public DbSet<Tokens> Tokens { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Account - Customer / Staff (1-1)

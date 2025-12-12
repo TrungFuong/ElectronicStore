@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +17,14 @@ namespace Infrastructure.Repositories
         public AccountRepository(DBContext context) : base(context)
         {
             _context = context;
+        }
+
+        public async Task<Account?> GetByIdAsync(string accountId)
+        {
+            return await _context.Accounts
+                .Include(a => a.Customer)
+                .Include(a => a.Staff)
+                .FirstOrDefaultAsync(a => a.AccountId == accountId);
         }
 
         public async Task<Account?> GetByPhoneAsync(string phone)

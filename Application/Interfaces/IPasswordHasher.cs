@@ -8,8 +8,7 @@ namespace Application.Interfaces
 {
     public interface IPasswordHasher
     {
-        string GenerateSalt();
-        string HashPassword(string password, string salt);
-        bool VerifyPassword(string password, string salt, string hash);
+        string HashPassword(string password);
+        bool VerifyPassword(string password, string hash);
     }
 }

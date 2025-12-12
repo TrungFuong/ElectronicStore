@@ -14,5 +14,7 @@ namespace Domain.Interfaces
 
         // Dùng cho refresh token
         Task<Account?> GetWithRefreshTokensAsync(string accountId);
+        //Change pass
+        Task<Account?> GetByIdAsync(string accountId);
     }
 }

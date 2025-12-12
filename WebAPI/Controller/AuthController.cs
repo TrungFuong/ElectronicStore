@@ -4,7 +4,9 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Models;
 using Domain.Models.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 //POST: TẠO MỚI ĐỐI TƯỢNG HOẶC CẬP NHẬT
 //PUT: CHỈ CẬP NHẬT ĐỐI TƯỢNG ĐÃ TỒN TẠI, KHI CẬP NHẬT THÌ CẬP NHẬT TOÀN BỘ THÔNG TIN
@@ -94,6 +96,74 @@ namespace API.Controllers
                     Message = ex.Message
                 };
                 return Conflict(response);
+            }
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest logoutRequest)
+        {
+            try
+            {
+                var result = await _authService.LogoutAsync(logoutRequest.RefreshToken);
+                var response = new GeneralBoolResponse
+                {
+                    Success = result,
+                    Message = "Đăng xuất thành công"
+                };
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new GeneralBoolResponse
+                {
+                    Success = false,
+                    Message = ex.Message
+                };
+                return Conflict(response);
+            }
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            // Lấy AccountId từ Claims 
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(
+                    new GeneralGetResponse { 
+                        Success = false, 
+                        Message = "Không xác định được người dùng." 
+                    });
+            }
+            // Gán accountId vào request
+            request.AccountId = accountId;
+
+            try
+            {
+                var ok = await _authService.ChangePasswordAsync(request);
+                if (ok)
+                {
+                    return Ok(
+                        new GeneralGetResponse { 
+                            Success = true, 
+                            Message = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại" 
+                        });
+                }
+                return BadRequest(
+                    new GeneralGetResponse { 
+                        Success = false, 
+                        Message = "Đổi mật khẩu không thành công" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(
+                    new GeneralGetResponse { 
+                        Success = false, 
+                        Message = ex.Message 
+                    });
             }
         }
     }

@@ -15,9 +15,6 @@ namespace Domain.Entities
         //pw lưu thì phải mã hóa
         public string HashPassword { get; set; }
         [Required]
-        [MaxLength(200)]
-        public string Salt { get; set; }
-        [Required]
         public EnumRole Role { get; set; } = 0;
         [Required]
         public bool IsActive { get; set; } = true;
