@@ -9,7 +9,8 @@ namespace Domain.Interfaces
     public interface IUnitOfWork
     {
         IAccountRepository AccountRepository { get; }
-        //IBrandRepository Brands { get; }
+        IBrandRepository BrandRepository { get; }
+
         //ICategoryRepository Categories { get; }
         //ICustomerRepository Customers { get; }
         //IProductRepository Products { get; }

@@ -1,5 +1,6 @@
 ﻿using Application.Implementations;
 using Application.Interfaces;
+using Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Extensions
@@ -11,6 +12,13 @@ namespace Application.Extensions
         {
             // Application-level services
             services.AddScoped<IAuthService, AuthService>();
+
+            // Product
+            services.AddScoped<IProductService, ProductService>();
+
+            // Brand
+            services.AddScoped<IBrandService, BrandService>();
+
 
             return services;
         }

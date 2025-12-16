@@ -9,5 +9,6 @@ namespace Domain.Interfaces
 {
     public interface IBrandRepository : IGenericsRepository<Brand>
     {
+        Task<string> GenerateNewBrandIdAsync();
     }
 }
