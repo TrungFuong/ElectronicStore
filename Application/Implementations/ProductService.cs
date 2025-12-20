@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Models.Responses;
@@ -9,118 +10,134 @@ namespace Application.Services
 {
     public class ProductService : IProductService
     {
-        private readonly IProductRepository _productRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public ProductService(
-            IProductRepository productRepository,
-            IUnitOfWork unitOfWork)
+        public ProductService(IUnitOfWork unitOfWork)
         {
-            _productRepository = productRepository;
             _unitOfWork = unitOfWork;
         }
 
-        // 1. Tạo sản phẩm
+        // CREATE
         public async Task<bool> CreateProductAsync(CreateProductRequest request)
         {
-            try
+            var count = await _unitOfWork.ProductRepository.CountAsync();
+            var product = new Product
             {
-                var product = new Product
-                {
-                    ProductId = Guid.NewGuid().ToString(),
-                    ProductName = request.ProductName,
-                    ProductDescription = request.ProductDescription,
-                    ProductPrice = request.ProductPrice,
-                    StockQuantity = request.StockQuantity,
-                    CategoryId = request.CategoryId,
-                    BrandId = request.BrandId,
-                    CreatedAt = DateOnly.FromDateTime(DateTime.Now),
-                    IsActive = true
-                };
+                ProductId = Prefixes.PRODUCT_ID_PREFIX + string.Format(Prefixes.ID_FORMAT, count + 1),
+                ProductName = request.ProductName,
+                ProductPrice = request.ProductPrice,
+                StockQuantity = request.StockQuantity,
+                ProductDescription = request.ProductDescription,
+                CategoryId = request.CategoryId,
+                BrandId = request.BrandId,
+                CreatedAt = DateOnly.FromDateTime(DateTime.Now),
+                IsActive = true
+            };
 
-                await _productRepository.AddAsync(product);
-                await _unitOfWork.CommitAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            await _unitOfWork.ProductRepository.AddAsync(product);
+            await _unitOfWork.CommitAsync();
+            return true;
         }
 
-        // 2. Lấy danh sách sản phẩm
+        // GET ALL
         public async Task<IEnumerable<ProductResponse>> GetAllAsync()
         {
-            var products = await _productRepository.GetAllWithIncludesAsync();
-            return products.Select(MapToResponse);
+            var products = await _unitOfWork.ProductRepository
+                .GetAllAsync(p => p.IsActive, p => p.Category, p => p.Brand);
+
+            return products.Select(p => new ProductResponse
+            {
+                ProductId = p.ProductId,
+                ProductName = p.ProductName,
+                ProductPrice = p.ProductPrice,
+                StockQuantity = p.StockQuantity,
+                ProductDescription = p.ProductDescription,
+                CategoryName = p.Category?.CategoryName,
+                BrandName = p.Brand?.BrandName
+            });
         }
 
-        // 3. Lấy chi tiết sản phẩm
+        // GET BY ID
         public async Task<ProductResponse?> GetByIdAsync(string productId)
         {
-            var product = await _productRepository.GetByIdAsync(productId);
+            var product = await _unitOfWork.ProductRepository
+                .GetAsync(p => p.ProductId == productId && p.IsActive,
+                          p => p.Category, p => p.Brand);
+
             if (product == null) return null;
 
-            return MapToResponse(product);
-        }
-
-        // 4. Cập nhật sản phẩm
-        public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
-        {
-            try
-            {
-                var product = await _productRepository.GetByIdAsync(request.ProductId);
-                if (product == null) return false;
-
-                product.ProductName = request.ProductName;
-                product.ProductDescription = request.ProductDescription;
-                product.ProductPrice = request.ProductPrice;
-                product.StockQuantity = request.StockQuantity;
-                product.CategoryId = request.CategoryId;
-                product.BrandId = request.BrandId;
-                product.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
-
-                _productRepository.Update(product);
-                await _unitOfWork.CommitAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        // 5. Xoá mềm sản phẩm
-        public async Task<bool> DeleteProductAsync(string productId)
-        {
-            try
-            {
-                var product = await _productRepository.GetByIdAsync(productId);
-                if (product == null) return false;
-
-                _productRepository.SoftDelete(product);
-                await _unitOfWork.CommitAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        // ===== PRIVATE MAP =====
-        private static ProductResponse MapToResponse(Product product)
-        {
             return new ProductResponse
             {
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
-                StockQuantity = product.StockQuantity,
                 ProductPrice = product.ProductPrice,
-                IsActive = product.IsActive,
+                StockQuantity = product.StockQuantity,
+                ProductDescription = product.ProductDescription,
                 CategoryName = product.Category?.CategoryName,
                 BrandName = product.Brand?.BrandName
             };
         }
+
+        // UPDATE
+        public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
+        {
+            var product = await _unitOfWork.ProductRepository
+                .GetAsync(p => p.ProductId == request.ProductId && p.IsActive);
+
+            if (product == null) return false;
+
+            product.ProductName = request.ProductName;
+            product.ProductPrice = request.ProductPrice;
+            product.StockQuantity = request.StockQuantity;
+            product.ProductDescription = request.ProductDescription;
+            product.CategoryId = request.CategoryId;
+            product.BrandId = request.BrandId;
+            product.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+
+            _unitOfWork.ProductRepository.Update(product);
+            await _unitOfWork.CommitAsync();
+
+            return true;
+        }
+
+        // SOFT DELETE
+        public async Task<bool> DeleteProductAsync(string productId)
+        {
+            var product = await _unitOfWork.ProductRepository
+                .GetAsync(p => p.ProductId == productId && p.IsActive);
+
+            if (product == null) return false;
+
+            product.IsActive = false;
+            _unitOfWork.ProductRepository.Update(product);
+            await _unitOfWork.CommitAsync();
+
+            return true;
+        }
+        // GET CATEGORY
+        public async Task<IEnumerable<CategoryProductResponse>> GetByCategoryAsync(string categoryId)
+        {
+            var products = await _unitOfWork.ProductRepository.GetAllAsync(
+                p => p.CategoryId == categoryId && p.IsActive,
+                p => p.Brand,
+                p => p.Category
+            );
+
+            return products.Select(p => new CategoryProductResponse
+            {
+                ProductId = p.ProductId,
+                ProductName = p.ProductName,
+                ProductPrice = p.ProductPrice,
+                StockQuantity = p.StockQuantity,
+                ProductDescription = p.ProductDescription,
+
+                BrandId = p.BrandId,
+                BrandName = p.Brand?.BrandName,
+
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category?.CategoryName
+            });
+        }
+
     }
 }

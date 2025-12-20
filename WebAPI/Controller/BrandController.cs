@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
+//CHƯA AUTHORIZE 
+
+
 [ApiController]
 [Route("api/brands")]
 public class BrandController : ControllerBase

@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Implementations;
+using Application.Interfaces;
 using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Infrastructure.Repositories;
@@ -36,6 +37,14 @@ namespace Infrastructure.Extensions
 
             // Brand Repository
             services.AddScoped<IBrandRepository, BrandRepository>();
+
+            // Category
+            services.AddScoped<ICategoryService, CategoryService>();
+
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+            
+            services.AddScoped<IProductRepository, ProductRepository>();
 
             return services;
         }

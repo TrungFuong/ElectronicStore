@@ -25,10 +25,11 @@ namespace Infrastructure
         private readonly DBContext _context;
         private IAccountRepository _accountRepository;
         private IBrandRepository _brandRepository;
-        //private ICategoryRepository _categoryRepository;
+        private ICategoryRepository _categoryRepository;
         //private ICustomerRepository _customerRepository;
         //private IProductRepository _productRepository;
         private IRefreshTokenRepository _refreshTokenRepository;
+        private IProductRepository _productRepository;
 
         public UnitOfWork(DBContext context)
         {
@@ -42,6 +43,12 @@ namespace Infrastructure
             => _refreshTokenRepository ??= new RefreshTokenRepository(_context);
         public IBrandRepository BrandRepository
         => _brandRepository ??= new BrandRepository(_context);
+
+        public ICategoryRepository CategoryRepository
+        => _categoryRepository ??= new CategoryRepository(_context);
+
+        public IProductRepository ProductRepository
+        => _productRepository ??= new ProductRepository(_context);
 
         public int Commit()
         {

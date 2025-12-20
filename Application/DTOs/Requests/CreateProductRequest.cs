@@ -9,18 +9,11 @@ namespace Application.DTOs.Requests
 {
     public class CreateProductRequest
     {
-        [Required]
-        public string ProductName { get; set; } = string.Empty;
-
+        public string ProductName { get; set; }
         public int StockQuantity { get; set; }
-
         public string? ProductDescription { get; set; }
-
-        [Required]
         public decimal ProductPrice { get; set; }
-
         public string? CategoryId { get; set; }
-
         public string? BrandId { get; set; }
     }
 }

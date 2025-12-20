@@ -11,9 +11,9 @@ namespace Domain.Interfaces
         IAccountRepository AccountRepository { get; }
         IBrandRepository BrandRepository { get; }
 
-        //ICategoryRepository Categories { get; }
+        ICategoryRepository CategoryRepository { get; }
         //ICustomerRepository Customers { get; }
-        //IProductRepository Products { get; }
+        IProductRepository ProductRepository { get; }
         IRefreshTokenRepository RefreshTokenRepository { get; }
         Task<int> CommitAsync();
         int Commit();

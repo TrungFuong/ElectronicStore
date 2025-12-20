@@ -7,10 +7,12 @@ using Domain.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+
+
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/products")]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
@@ -20,147 +22,89 @@ namespace API.Controllers
             _productService = productService;
         }
 
-        // ============================
-        // GET: api/product
-        // Public
-        // ============================
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateProductRequest request)
+        {
+            var ok = await _productService.CreateProductAsync(request);
+            return Ok(new GeneralBoolResponse
+            {
+                Success = ok,
+                Message = "Create product successfully"
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
+            var data = await _productService.GetAllAsync();
+            return Ok(new GeneralGetResponse
             {
-                var result = await _productService.GetAllAsync();
-                return Ok(new GeneralGetResponse
-                {
-                    Success = true,
-                    Message = "Lấy danh sách sản phẩm thành công",
-                    Data = result
-                });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new GeneralBoolResponse
-                {
-                    Success = false,
-                    Message = ex.Message
-                });
-            }
+                Data = data,
+                Message = "Get products successfully"
+            });
         }
 
-        // ============================
-        // GET: api/product/{id}
-        // Public
-        // ============================
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
-            try
-            {
-                var result = await _productService.GetByIdAsync(id);
-                if (result == null)
-                {
-                    return NotFound(new GeneralBoolResponse
-                    {
-                        Success = false,
-                        Message = "Không tìm thấy sản phẩm"
-                    });
-                }
-
-                return Ok(new GeneralGetResponse
-                {
-                    Success = true,
-                    Data = result
-                });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new GeneralBoolResponse
+            var product = await _productService.GetByIdAsync(id);
+            if (product == null)
+                return NotFound(new GeneralBoolResponse
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = "Product not found"
                 });
-            }
+
+            return Ok(new GeneralGetResponse
+            {
+                Data = product
+            });
         }
 
-        // ============================
-        // POST: api/product
-        // ADMIN, STAFF
-        // ============================
-        [HttpPost]
-        
-        public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
-        {
-            try
-            {
-                var result = await _productService.CreateProductAsync(request);
-                return Ok(new GeneralBoolResponse
-                {
-                    Success = result,
-                    Message = "Tạo sản phẩm thành công"
-                });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new GeneralBoolResponse
-                {
-                    Success = false,
-                    Message = ex.Message
-                });
-            }
-        }
-
-        // ============================
-        // PUT: api/product
-        // ADMIN, STAFF
-        // ============================
         [HttpPut]
-        [Authorize(Roles = "ADMIN,STAFF")]
-        public async Task<IActionResult> Update([FromBody] UpdateProductRequest request)
+        public async Task<IActionResult> Update(UpdateProductRequest request)
         {
-            try
-            {
-                var result = await _productService.UpdateProductAsync(request);
-                return Ok(new GeneralBoolResponse
-                {
-                    Success = result,
-                    Message = "Cập nhật sản phẩm thành công"
-                });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new GeneralBoolResponse
+            var ok = await _productService.UpdateProductAsync(request);
+            if (!ok)
+                return NotFound(new GeneralBoolResponse
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = "Product not found"
                 });
-            }
+
+            return Ok(new GeneralBoolResponse
+            {
+                Message = "Update product successfully"
+            });
         }
 
-        // ============================
-        // DELETE: api/product/{id}
-        // ADMIN
-        // ============================
         [HttpDelete("{id}")]
-        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Delete(string id)
         {
-            try
-            {
-                var result = await _productService.DeleteProductAsync(id);
-                return Ok(new GeneralBoolResponse
-                {
-                    Success = result,
-                    Message = "Xóa sản phẩm thành công"
-                });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new GeneralBoolResponse
+            var ok = await _productService.DeleteProductAsync(id);
+            if (!ok)
+                return NotFound(new GeneralBoolResponse
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = "Product not found"
                 });
-            }
+
+            return Ok(new GeneralBoolResponse
+            {
+                Message = "Delete product successfully"
+            });
         }
+
+        [HttpGet("category/{categoryId}")]
+        public async Task<IActionResult> GetByCategory(string categoryId)
+        {
+            var products = await _productService.GetByCategoryAsync(categoryId);
+
+            return Ok(new GeneralGetResponse
+            {
+                Data = products
+            });
+        }
+
     }
 }

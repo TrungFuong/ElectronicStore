@@ -8,13 +8,11 @@ namespace Application.DTOs.Responses
 {
     public class ProductResponse
     {
-        public string ProductId { get; set; } = default!;
-        public string ProductName { get; set; } = string.Empty;
+        public string ProductId { get; set; }
+        public string ProductName { get; set; }
+        public decimal ProductPrice { get; set; }
         public int StockQuantity { get; set; }
         public string? ProductDescription { get; set; }
-        public decimal ProductPrice { get; set; }
-        public bool IsActive { get; set; }
-
         public string? CategoryName { get; set; }
         public string? BrandName { get; set; }
     }

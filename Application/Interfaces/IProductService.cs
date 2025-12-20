@@ -24,5 +24,9 @@ namespace Application.Interfaces
 
         // Xoá mềm sản phẩm
         Task<bool> DeleteProductAsync(string productId);
+
+        // lay danh muc
+        Task<IEnumerable<CategoryProductResponse>> GetByCategoryAsync(string categoryId);
+
     }
 }

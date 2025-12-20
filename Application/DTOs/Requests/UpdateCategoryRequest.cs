@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Requests
 {
-    public class CreateBrandRequest
+    public class UpdateCategoryRequest
     {
         [Required]
-        public string BrandName { get; set; }
-        public string? BrandDescription { get; set; }
-    
+        public string CategoryId { get; set; }
+        public string CategoryName { get; set; }
+        public string CategoryDescription { get; set; }
 
     }
 }

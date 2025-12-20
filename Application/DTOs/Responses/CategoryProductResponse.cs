@@ -1,23 +1,23 @@
-﻿using Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Requests
+namespace Application.DTOs.Responses
 {
-    public class UpdateProductRequest
+    public class CategoryProductResponse
     {
-        [Required]
         public string ProductId { get; set; }
         public string ProductName { get; set; }
+        public decimal ProductPrice { get; set; }
         public int StockQuantity { get; set; }
         public string? ProductDescription { get; set; }
-        public decimal ProductPrice { get; set; }
-        public string? CategoryId { get; set; }
+
         public string? BrandId { get; set; }
+        public string? BrandName { get; set; }
+
+        public string? CategoryId { get; set; }
+        public string? CategoryName { get; set; }
     }
 }

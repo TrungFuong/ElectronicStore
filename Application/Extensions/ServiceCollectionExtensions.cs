@@ -19,6 +19,9 @@ namespace Application.Extensions
             // Brand
             services.AddScoped<IBrandService, BrandService>();
 
+            // Category
+            services.AddScoped<ICategoryService, CategoryService>();
+
 
             return services;
         }

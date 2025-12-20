@@ -30,5 +30,6 @@ namespace Infrastructure.Repositories
                 .Where(p => p.IsActive)
                 .ToListAsync();
         }
+
     }
 }

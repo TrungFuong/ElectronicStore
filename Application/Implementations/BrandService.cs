@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Interfaces;
 using System;
@@ -23,11 +24,11 @@ namespace Application.Implementations
         // CREATE
         public async Task CreateAsync(CreateBrandRequest request)
         {
-            var newId = await _unitOfWork.BrandRepository.GenerateNewBrandIdAsync();
+            var count = await _unitOfWork.CategoryRepository.CountAsync();
 
             var brand = new Brand
             {
-                BrandId = newId,
+                BrandId = Prefixes.BRAND_ID_PREFIX +string.Format(Prefixes.ID_FORMAT, count + 1),
                 BrandName = request.BrandName,
                 BrandDescription = request.BrandDescription
             };
