@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Implementations;
+using Application.Interfaces;
 using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Infrastructure.Repositories;
@@ -20,6 +21,7 @@ namespace Infrastructure
             // Repositories
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             // UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -28,6 +30,8 @@ namespace Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
 
+            
+            
             return services;
         }
     }
