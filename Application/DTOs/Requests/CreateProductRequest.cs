@@ -7,13 +7,19 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Requests
 {
-    public class CreateProductRequest
-    {
-        public string ProductName { get; set; }
-        public int StockQuantity { get; set; }
-        public string? ProductDescription { get; set; }
-        public decimal ProductPrice { get; set; }
-        public string? CategoryId { get; set; }
-        public string? BrandId { get; set; }
-    }
+    
+    
+        public class CreateProductRequest
+        {
+            public string ProductName { get; set; } = null!;
+            public decimal ProductPrice { get; set; }
+            public int StockQuantity { get; set; }
+            public string ProductDescription { get; set; } = null!;
+            public string CategoryId { get; set; } = null!;
+            public string BrandId { get; set; } = null!;
+        }
+    
+
+
+
 }

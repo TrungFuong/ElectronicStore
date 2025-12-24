@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class IniCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,7 +19,7 @@ namespace Infrastructure.Migrations
                 {
                     BrandId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     BrandName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    BrandDescription = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                    BrandDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -30,7 +32,7 @@ namespace Infrastructure.Migrations
                 {
                     CategoryId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     CategoryName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CategoryDescription = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CategoryDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -91,6 +93,19 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "VariationAttributes",
+                columns: table => new
+                {
+                    AttributeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VariationAttributes", x => x.AttributeId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -129,7 +144,6 @@ namespace Infrastructure.Migrations
                     AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     HashPassword = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Salt = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Role = table.Column<int>(type: "int", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CustomerId = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -144,6 +158,69 @@ namespace Infrastructure.Migrations
                         principalTable: "Staffs",
                         principalColumn: "StaffId",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductImages",
+                columns: table => new
+                {
+                    ImageId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    IsMain = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductImages", x => x.ImageId);
+                    table.ForeignKey(
+                        name: "FK_ProductImages_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductSpecifications",
+                columns: table => new
+                {
+                    SpecificationId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    SpecKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    SpecValue = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductSpecifications", x => x.SpecificationId);
+                    table.ForeignKey(
+                        name: "FK_ProductSpecifications_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductVariations",
+                columns: table => new
+                {
+                    VariationId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    StockQuantity = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductVariations", x => x.VariationId);
+                    table.ForeignKey(
+                        name: "FK_ProductVariations_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -195,23 +272,29 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tokens",
+                name: "VariationOptions",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    HashToken = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    OptionId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    VariationId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    AttributeId = table.Column<int>(type: "int", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Tokens", x => x.Id);
+                    table.PrimaryKey("PK_VariationOptions", x => x.OptionId);
                     table.ForeignKey(
-                        name: "FK_Tokens_Accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Accounts",
-                        principalColumn: "AccountId",
+                        name: "FK_VariationOptions_ProductVariations_VariationId",
+                        column: x => x.VariationId,
+                        principalTable: "ProductVariations",
+                        principalColumn: "VariationId",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_VariationOptions_VariationAttributes_AttributeId",
+                        column: x => x.AttributeId,
+                        principalTable: "VariationAttributes",
+                        principalColumn: "AttributeId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -339,6 +422,18 @@ namespace Infrastructure.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.InsertData(
+                table: "VariationAttributes",
+                columns: new[] { "AttributeId", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Màu sắc" },
+                    { 2, "Dung lượng" },
+                    { 3, "RAM" },
+                    { 4, "Kích thước" },
+                    { 5, "Phiên bản" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_StaffId",
                 table: "Accounts",
@@ -384,6 +479,11 @@ namespace Infrastructure.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProductImages_ProductId",
+                table: "ProductImages",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Products_BrandId",
                 table: "Products",
                 column: "BrandId");
@@ -394,14 +494,29 @@ namespace Infrastructure.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProductSpecifications_ProductId_SpecKey",
+                table: "ProductSpecifications",
+                columns: new[] { "ProductId", "SpecKey" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductVariations_ProductId",
+                table: "ProductVariations",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_AccountId",
                 table: "RefreshTokens",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tokens_AccountId",
-                table: "Tokens",
-                column: "AccountId");
+                name: "IX_VariationOptions_AttributeId",
+                table: "VariationOptions",
+                column: "AttributeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VariationOptions_VariationId",
+                table: "VariationOptions",
+                column: "VariationId");
         }
 
         /// <inheritdoc />
@@ -417,16 +532,19 @@ namespace Infrastructure.Migrations
                 name: "Payments");
 
             migrationBuilder.DropTable(
+                name: "ProductImages");
+
+            migrationBuilder.DropTable(
+                name: "ProductSpecifications");
+
+            migrationBuilder.DropTable(
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
-                name: "Tokens");
+                name: "VariationOptions");
 
             migrationBuilder.DropTable(
                 name: "Discounts");
-
-            migrationBuilder.DropTable(
-                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Orders");
@@ -435,16 +553,25 @@ namespace Infrastructure.Migrations
                 name: "PaymentGateways");
 
             migrationBuilder.DropTable(
-                name: "Brands");
+                name: "ProductVariations");
 
             migrationBuilder.DropTable(
-                name: "Categories");
+                name: "VariationAttributes");
 
             migrationBuilder.DropTable(
                 name: "Customers");
 
             migrationBuilder.DropTable(
+                name: "Products");
+
+            migrationBuilder.DropTable(
                 name: "Accounts");
+
+            migrationBuilder.DropTable(
+                name: "Brands");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "Staffs");

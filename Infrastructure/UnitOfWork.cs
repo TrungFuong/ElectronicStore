@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using Domain.Entities;
+using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Infrastructure.Repositories;
 using System;
@@ -31,6 +32,11 @@ namespace Infrastructure
         private IRefreshTokenRepository _refreshTokenRepository;
         private IProductRepository _productRepository;
 
+        private IGenericsRepository<ProductVariation>? _productVariationRepository;
+        private IGenericsRepository<ProductSpecification>? _productSpecificationRepository;
+        private IGenericsRepository<ProductImage>? _productImageRepository;
+        private IGenericsRepository<VariationAttribute>? _variationAttributeRepository;
+        private IGenericsRepository<VariationOption>? _variationOptionRepository;
         public UnitOfWork(DBContext context)
         {
             _context = context;
@@ -50,6 +56,22 @@ namespace Infrastructure
         public IProductRepository ProductRepository
         => _productRepository ??= new ProductRepository(_context);
 
+        public IGenericsRepository<ProductVariation> ProductVariationRepository
+        => _productVariationRepository
+           ??= new GenericRepository<ProductVariation>(_context);
+
+        public IGenericsRepository<ProductSpecification> ProductSpecificationRepository
+        => _productSpecificationRepository
+           ??= new GenericRepository<ProductSpecification>(_context);
+        public IGenericsRepository<ProductImage> ProductImageRepository
+        => _productImageRepository
+           ??= new GenericRepository<ProductImage>(_context);
+        public IGenericsRepository<VariationAttribute> VariationAttributeRepository 
+        => _variationAttributeRepository
+           ??= new GenericRepository<VariationAttribute>(_context);
+        public IGenericsRepository<VariationOption> VariationOptionRepository
+        => _variationOptionRepository
+           ??= new GenericRepository<VariationOption>(_context);
         public int Commit()
         {
             return _context.SaveChanges();

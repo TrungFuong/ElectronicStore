@@ -1,13 +1,8 @@
-﻿using Application.DTOs.Auth;
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
 using Application.Interfaces;
-using Domain.Entities;
 using Domain.Models;
-using Domain.Models.Requests;
-using Microsoft.AspNetCore.Authorization;
+using Domain.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-
 
 namespace API.Controllers
 {
@@ -22,6 +17,7 @@ namespace API.Controllers
             _productService = productService;
         }
 
+        // CREATE 
         [HttpPost]
         public async Task<IActionResult> Create(CreateProductRequest request)
         {
@@ -33,6 +29,7 @@ namespace API.Controllers
             });
         }
 
+        //  GET ALL
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -44,6 +41,7 @@ namespace API.Controllers
             });
         }
 
+        // GET BY ID 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
@@ -55,12 +53,10 @@ namespace API.Controllers
                     Message = "Product not found"
                 });
 
-            return Ok(new GeneralGetResponse
-            {
-                Data = product
-            });
+            return Ok(new GeneralGetResponse { Data = product });
         }
 
+        // UPDATE
         [HttpPut]
         public async Task<IActionResult> Update(UpdateProductRequest request)
         {
@@ -74,10 +70,12 @@ namespace API.Controllers
 
             return Ok(new GeneralBoolResponse
             {
+                Success = true,
                 Message = "Update product successfully"
             });
         }
 
+        // DELETE 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
@@ -91,20 +89,34 @@ namespace API.Controllers
 
             return Ok(new GeneralBoolResponse
             {
+                Success = true,
                 Message = "Delete product successfully"
             });
         }
 
+        //BY CATEGORY 
         [HttpGet("category/{categoryId}")]
         public async Task<IActionResult> GetByCategory(string categoryId)
         {
             var products = await _productService.GetByCategoryAsync(categoryId);
-
             return Ok(new GeneralGetResponse
             {
-                Data = products
+                Data = products,
+                Message = "Get products by category successfully"
             });
         }
 
+        // BY BRAND 
+        [HttpGet("brand/{brandId}")]
+        public async Task<IActionResult> GetByBrand(string brandId)
+        {
+            var products = await _productService.GetByBrandAsync(brandId);
+
+            return Ok(new GeneralGetResponse
+            {
+                Data = products,
+                Message = "Get products by brand successfully"
+            });
+        }
     }
 }

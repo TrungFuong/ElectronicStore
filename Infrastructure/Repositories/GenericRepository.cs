@@ -135,9 +135,9 @@ namespace Infrastructure.Repositories
             await _context.Set<T>().AddAsync(entity);
         }
 
-        public Task AddRangeAsync(IEnumerable<T> entities)
+        public async Task AddRangeAsync(IEnumerable<T> entities)
         {
-            throw new NotImplementedException();
+            await _context.Set<T>().AddRangeAsync(entities);
         }
 
         public void Update(T entity)
@@ -171,5 +171,6 @@ namespace Infrastructure.Repositories
             }
             return await query.CountAsync();
         }
+
     }
 }

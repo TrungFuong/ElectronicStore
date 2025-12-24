@@ -38,14 +38,11 @@ namespace Infrastructure.Extensions
             // Brand Repository
             services.AddScoped<IBrandRepository, BrandRepository>();
 
-            // Category
-            services.AddScoped<ICategoryService, CategoryService>();
-
+            // Category repository & Service
+            
             services.AddScoped<ICategoryRepository, CategoryRepository>();
 
             
-            services.AddScoped<IProductRepository, ProductRepository>();
-
             return services;
         }
     }

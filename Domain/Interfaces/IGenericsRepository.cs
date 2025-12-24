@@ -30,5 +30,7 @@ namespace Domain.Interfaces
         void RemoveRange(IEnumerable<T> entities);
 
         Task<int> CountAsync(Expression<Func<T, bool>> expression = null);
+
+        Task AddRangeAsync(IEnumerable<T> entities);
     }
 }

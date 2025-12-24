@@ -25,6 +25,13 @@ namespace Domain.Entities
         public Category? Category { get; set; }
         public string? BrandId { get; set; }
         public Brand? Brand { get; set; }
+
         public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
+        public ICollection<ProductVariation>? Variations { get; set; }
+
+        public ICollection<ProductImage>? Images { get; set; } = new List<ProductImage>();
+        public ICollection<ProductSpecification>? Specifications { get; set; } = new List<ProductSpecification>();
+
     }
 }

@@ -22,6 +22,11 @@ namespace Application.Extensions
             // Category
             services.AddScoped<ICategoryService, CategoryService>();
 
+            services.AddScoped<IProductVariationService, ProductVariationService>();
+
+            services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
+
+            services.AddScoped<IProductImageService, ProductImageService>();
 
             return services;
         }

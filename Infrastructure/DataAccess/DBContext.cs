@@ -6,19 +6,18 @@ namespace Infrastructure.DataAccess
 {
     public class DBContext : DbContext
     {
-        public DBContext(DbContextOptions<DBContext> options) : base(options)
-        {
-        }
+        public DBContext(DbContextOptions<DBContext> options) : base(options) { }
 
-        public DBContext()
-        {
-        }
+        public DBContext() { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                var ConnectionString = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetConnectionString("DefaultConnection");
+                var ConnectionString = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json")
+                    .Build()
+                    .GetConnectionString("DefaultConnection");
                 optionsBuilder.UseSqlServer(ConnectionString, builder =>
                 {
                     builder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
@@ -26,6 +25,7 @@ namespace Infrastructure.DataAccess
             }
         }
 
+        // Các bảng cũ
         public DbSet<Account> Accounts { get; set; } = null!;
         public DbSet<Brand> Brands { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
@@ -39,8 +39,22 @@ namespace Infrastructure.DataAccess
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<Staff> Staffs { get; set; } = null!;
+
+        // Các bảng mới cho Product Variation
+        public DbSet<ProductVariation> ProductVariations { get; set; } = null!;
+        public DbSet<VariationAttribute> VariationAttributes { get; set; } = null!;
+        public DbSet<VariationOption> VariationOptions { get; set; } = null!;
+        public DbSet<ProductImage> ProductImages { get; set; } = null!;
+
+
+        //Specification 
+        public DbSet<ProductSpecification> ProductSpecifications { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
+            // --- Cấu hình quan hệ cũ ---
             // Account - Customer / Staff (1-1)
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.Customer)
@@ -75,7 +89,7 @@ namespace Infrastructure.DataAccess
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Customer - Account
+            // Customer - Order / DiscountUsage
             modelBuilder.Entity<Customer>()
                 .HasMany(c => c.Orders)
                 .WithOne(o => o.Customer)
@@ -88,14 +102,13 @@ namespace Infrastructure.DataAccess
                 .HasForeignKey(du => du.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Discount - DiscountUsage (1-n)
+            // Discount - DiscountUsage
             modelBuilder.Entity<Discount>()
                 .HasMany(d => d.DiscountUsages)
                 .WithOne(du => du.Discount)
                 .HasForeignKey(du => du.DiscountId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // DiscountUsage (thực thể yếu, composite key)
             modelBuilder.Entity<DiscountUsage>()
                 .HasKey(du => new { du.DiscountId, du.CustomerId, du.OrderId });
 
@@ -156,7 +169,7 @@ namespace Infrastructure.DataAccess
                 .HasForeignKey(p => p.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Product
+            // Product - Brand / Category / OrderDetails
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Brand)
                 .WithMany(b => b.Products)
@@ -188,7 +201,55 @@ namespace Infrastructure.DataAccess
                 .WithOne(a => a.Staff)
                 .HasForeignKey<Account>(a => a.StaffId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
 
+            // --- Cấu hình ProductVariation ---
+            modelBuilder.Entity<ProductVariation>()
+                .HasOne(v => v.Product)
+                .WithMany(p => p.Variations)
+                .HasForeignKey(v => v.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductVariation>()
+                .HasMany(v => v.Options)
+                .WithOne(o => o.Variation)
+                .HasForeignKey(o => o.VariationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // VariationOption - VariationAttribute
+            modelBuilder.Entity<VariationOption>()
+                .HasOne(o => o.Attribute)
+                .WithMany()
+                .HasForeignKey(o => o.AttributeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Product - ProductImage
+            modelBuilder.Entity<Product>()
+                .HasMany(p => p.Images)
+                .WithOne(i => i.Product)
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ProductImage: 1 ảnh chính + 3 ảnh phụ
+            modelBuilder.Entity<ProductImage>()
+                .Property(i => i.IsMain)
+                .HasDefaultValue(false);
+            modelBuilder.Entity<ProductSpecification>()
+                .HasOne(ps => ps.Product)
+                .WithMany(p => p.Specifications)
+                .HasForeignKey(ps => ps.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductSpecification>()
+                .HasIndex(ps => new { ps.ProductId, ps.SpecKey });
+
+            modelBuilder.Entity<VariationAttribute>().HasData(
+                new VariationAttribute { AttributeId = 1, Name = "Màu sắc" },
+                new VariationAttribute { AttributeId = 2, Name = "Dung lượng" },
+                new VariationAttribute { AttributeId = 3, Name = "RAM" },
+                new VariationAttribute { AttributeId = 4, Name = "Kích thước" },
+                new VariationAttribute { AttributeId = 5, Name = "Phiên bản" }
+            );
+        }
     }
+
 }

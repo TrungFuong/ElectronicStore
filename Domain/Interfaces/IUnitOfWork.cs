@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,15 @@ namespace Domain.Interfaces
         //ICustomerRepository Customers { get; }
         IProductRepository ProductRepository { get; }
         IRefreshTokenRepository RefreshTokenRepository { get; }
+        IGenericsRepository<ProductVariation> ProductVariationRepository { get; }
+
+        IGenericsRepository<ProductSpecification> ProductSpecificationRepository { get; }
+
+        IGenericsRepository<ProductImage> ProductImageRepository { get; }
+
+        IGenericsRepository<VariationAttribute> VariationAttributeRepository { get; }
+
+        IGenericsRepository<VariationOption> VariationOptionRepository { get; }
         Task<int> CommitAsync();
         int Commit();
     }
