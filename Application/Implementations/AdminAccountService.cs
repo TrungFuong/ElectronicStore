@@ -31,7 +31,7 @@ namespace Application.Implementations
             {
                 AccountId = Guid.NewGuid().ToString(),
                 Phone = request.Phone,
-                HashPassword = _passwordHasher.HashPassword(request.Password),
+                HashPassword = _passwordHasher.HashPassword("NV.12345"),
                 Role = EnumRole.Staff,
                 IsActive = true
             };
