@@ -149,21 +149,18 @@ namespace Application.Implementations
 
         public async Task<bool> RegisterAsync(RegisterRequest request)
         {
-            // 1. Check phone tồn tại hay chưa
             var exists = await _accountRepo.GetByPhoneAsync(request.Phone);
             if (exists != null)
                 throw new Exception("Số điện thoại đã được sử dụng.");
 
-            // 3. Hash password
             var hash = _passwordHasher.HashPassword(request.Password);
 
-            // 4. Tạo Account object
             var account = new Account
             {
                 AccountId = Guid.NewGuid().ToString(),
                 Phone = request.Phone,
                 HashPassword = hash,
-                Role = request.Role,
+                Role = EnumRole.Customer,
                 IsActive = true
             };
 

@@ -16,6 +16,8 @@ namespace Domain.Interfaces
         //ICustomerRepository Customers { get; }
         IProductRepository ProductRepository { get; }
         IRefreshTokenRepository RefreshTokenRepository { get; }
+        IStaffRepository StaffRepository { get; }
+        Task ExecuteInTransactionAsync(Func<Task> action);
         IGenericsRepository<ProductVariation> ProductVariationRepository { get; }
 
         IGenericsRepository<ProductSpecification> ProductSpecificationRepository { get; }
