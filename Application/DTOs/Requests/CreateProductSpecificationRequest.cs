@@ -8,7 +8,7 @@ namespace Application.DTOs.Requests
 {
     public class CreateProductSpecificationRequest
     {
-        public string ProductId { get; set; } = null!;
+        public string? ProductId { get; set; }
         public List<ProductSpecificationItem> Specifications { get; set; } = new();
     }
 

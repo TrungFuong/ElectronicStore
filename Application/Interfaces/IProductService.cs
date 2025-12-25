@@ -11,7 +11,7 @@ namespace Application.Interfaces
     public interface IProductService
     {
         // Tạo sản phẩm (Admin, Staff)
-        Task<bool> CreateProductAsync(CreateProductRequest request);
+        Task<ProductResponse> CreateProductAsync(CreateProductRequest request);
 
         // Lấy danh sách sản phẩm
         Task<IEnumerable<ProductResponse>> GetAllAsync();

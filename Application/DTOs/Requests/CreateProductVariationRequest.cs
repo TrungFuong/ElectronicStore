@@ -9,8 +9,8 @@ namespace Application.DTOs.Requests
 {
     public class CreateProductVariationRequest
     {
-        [Required]
-        public string ProductId { get; set; } = null!;
+
+        public string? ProductId { get; set; }
 
         [Required]
         public decimal Price { get; set; }

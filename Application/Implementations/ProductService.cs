@@ -4,7 +4,6 @@ using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Interfaces;
-using Domain.Models.Responses;
 
 namespace Application.Services
 {
@@ -17,7 +16,9 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        //PRIVATE: GENERATE PRODUCT ID
+        // =========================
+        // GENERATE PRODUCT ID
+        // =========================
         private async Task<string> GenerateProductIdAsync()
         {
             var lastProduct = (await _unitOfWork.ProductRepository.GetAllAsync())
@@ -35,8 +36,10 @@ namespace Application.Services
             return Prefixes.PRODUCT_ID_PREFIX + nextNumber.ToString("D4");
         }
 
-        //CREATE PRODUCT
-        public async Task<bool> CreateProductAsync(CreateProductRequest request)
+        // =========================
+        // CREATE PRODUCT (STEP 1)
+        // =========================
+        public async Task<ProductResponse> CreateProductAsync(CreateProductRequest request)
         {
             var brand = await _unitOfWork.BrandRepository
                 .GetAsync(b => b.BrandId == request.BrandId);
@@ -47,12 +50,12 @@ namespace Application.Services
             if (brand == null || category == null)
                 throw new Exception("Brand hoặc Category không tồn tại");
 
+            var productId = await GenerateProductIdAsync();
+
             var product = new Product
             {
-                ProductId = await GenerateProductIdAsync(),
+                ProductId = productId,
                 ProductName = request.ProductName,
-                ProductPrice = request.ProductPrice,
-                StockQuantity = request.StockQuantity,
                 ProductDescription = request.ProductDescription,
                 CategoryId = request.CategoryId,
                 BrandId = request.BrandId,
@@ -62,88 +65,105 @@ namespace Application.Services
 
             await _unitOfWork.ProductRepository.AddAsync(product);
             await _unitOfWork.CommitAsync();
-            return true;
+
+            return new ProductResponse
+            {
+                ProductId = productId
+            };
         }
 
-        //GET ALL (CÓ ẢNH MAIN)
+        // =========================
+        // GET ALL PRODUCTS (CARD)
+        // =========================
         public async Task<IEnumerable<ProductResponse>> GetAllAsync()
         {
-            var products = await _unitOfWork.ProductRepository
-                .GetAllAsync(p => p.IsActive, p => p.Category, p => p.Brand);
-
-            var productIds = products.Select(p => p.ProductId).ToList();
-
-            var mainImages = await _unitOfWork.ProductImageRepository
-                .GetAllAsync(i => productIds.Contains(i.ProductId) && i.IsMain);
+            var products = await _unitOfWork.ProductRepository.GetAllAsync(
+                p => p.IsActive,
+                p => p.Category,
+                p => p.Brand,
+                p => p.Images,
+                p => p.Variations
+            );
 
             return products.Select(p => new ProductResponse
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
-                ProductPrice = p.ProductPrice,
-                StockQuantity = p.StockQuantity,
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
 
-                Images = mainImages
-                    .Where(i => i.ProductId == p.ProductId)
+                ProductPrice = (p.Variations ?? new List<ProductVariation>())
+                    .Any() ? p.Variations.Min(v => v.Price) : 0,
+
+                StockQuantity = p.TotalStock,
+
+                Images = (p.Images ?? new List<ProductImage>())
+                    .Where(i => i.IsMain)
                     .Select(i => new ProductImageResponse
                     {
                         ImageUrl = i.ImageUrl,
                         IsMain = true
-                    })
-                    .ToList(),
-
-                Variations = null,
-                Specifications = null
+                    }).ToList()
             });
         }
 
-        //GET BY ID (FULL DETAIL)
+        // =========================
+        // GET PRODUCT BY ID (FULL)
+        // =========================
         public async Task<ProductResponse?> GetByIdAsync(string productId)
         {
-            var product = await _unitOfWork.ProductRepository
-                .GetAsync(p => p.ProductId == productId && p.IsActive,
-                          p => p.Category,
-                          p => p.Brand);
+            var product = await _unitOfWork.ProductRepository.GetAsync(
+                p => p.ProductId == productId && p.IsActive,
+                p => p.Category,
+                p => p.Brand,
+                p => p.Images,
+                p => p.Variations
+            );
 
             if (product == null) return null;
 
-            var variations = await _unitOfWork.ProductVariationRepository
-                .GetAllAsync(v => v.ProductId == productId, v => v.Options);
+            // 🔥 LOAD OPTIONS RIÊNG
+            var variationIds = product.Variations.Select(v => v.VariationId).ToList();
 
-            var attributes = await _unitOfWork.VariationAttributeRepository
-                .GetAllAsync();
+            var options = await _unitOfWork.VariationOptionRepository
+                .GetAllAsync(o => variationIds.Contains(o.VariationId));
+
+            var attributes = await _unitOfWork.VariationAttributeRepository.GetAllAsync();
 
             var specifications = await _unitOfWork.ProductSpecificationRepository
                 .GetAllAsync(s => s.ProductId == productId);
-
-            var images = await _unitOfWork.ProductImageRepository
-                .GetAllAsync(i => i.ProductId == productId);
 
             return new ProductResponse
             {
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
-                ProductPrice = product.ProductPrice,
-                StockQuantity = product.StockQuantity,
                 ProductDescription = product.ProductDescription,
                 CategoryName = product.Category?.CategoryName,
                 BrandName = product.Brand?.BrandName,
+                    
+                ProductPrice = product.Variations.Any()
+                    ? product.Variations.Min(v => v.Price)
+                    : 0,
 
-                Variations = variations.Select(v => new ProductVariationResponse
+                StockQuantity = product.TotalStock,
+
+                Variations = product.Variations.Select(v => new ProductVariationResponse
                 {
                     VariationId = v.VariationId,
                     Price = v.Price,
                     StockQuantity = v.StockQuantity,
-                    Options = v.Options.Select(o => new VariationOptionResponse
-                    {
-                        AttributeId = o.AttributeId,
-                        AttributeName = attributes
-                            .FirstOrDefault(a => a.AttributeId == o.AttributeId)?.Name ?? "",
-                        Value = o.Value
-                    }).ToList()
+
+                    Options = options
+                        .Where(o => o.VariationId == v.VariationId)
+                        .Select(o => new VariationOptionResponse
+                        {
+                            AttributeId = o.AttributeId,
+                            AttributeName = attributes
+                                .FirstOrDefault(a => a.AttributeId == o.AttributeId)?.Name ?? "",
+                            Value = o.Value
+                        }).ToList()
+
                 }).ToList(),
 
                 Specifications = specifications.Select(s => new ProductSpecificationResponse
@@ -153,7 +173,7 @@ namespace Application.Services
                     SpecValue = s.SpecValue
                 }).ToList(),
 
-                Images = images.Select(i => new ProductImageResponse
+                Images = product.Images.Select(i => new ProductImageResponse
                 {
                     ImageId = i.ImageId,
                     ImageUrl = i.ImageUrl,
@@ -162,7 +182,10 @@ namespace Application.Services
             };
         }
 
-        //UPDATE
+
+        // =========================
+        // UPDATE PRODUCT
+        // =========================
         public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
         {
             var product = await _unitOfWork.ProductRepository
@@ -171,8 +194,6 @@ namespace Application.Services
             if (product == null) return false;
 
             product.ProductName = request.ProductName;
-            product.ProductPrice = request.ProductPrice;
-            product.StockQuantity = request.StockQuantity;
             product.ProductDescription = request.ProductDescription;
             product.CategoryId = request.CategoryId;
             product.BrandId = request.BrandId;
@@ -183,7 +204,9 @@ namespace Application.Services
             return true;
         }
 
-        //DELETE (SOFT)
+        // =========================
+        // DELETE PRODUCT (SOFT)
+        // =========================
         public async Task<bool> DeleteProductAsync(string productId)
         {
             var product = await _unitOfWork.ProductRepository
@@ -197,50 +220,57 @@ namespace Application.Services
             return true;
         }
 
-        //GET BY CATEGORY 
+        // =========================
+        // GET BY CATEGORY
+        // =========================
         public async Task<IEnumerable<ProductCardResponse>> GetByCategoryAsync(string categoryId)
         {
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
                 p => p.IsActive && p.CategoryId == categoryId,
                 p => p.Category,
-                p => p.Brand
+                p => p.Brand,
+                p => p.Images,
+                p => p.Variations
             );
 
             return products.Select(p => new ProductCardResponse
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
-                ProductPrice = p.ProductPrice,
-                StockQuantity = p.StockQuantity,
                 ProductDescription = p.ProductDescription,
-                
-                BrandName = p.Brand?.BrandName,
-                
                 CategoryName = p.Category?.CategoryName,
-                ImageUrl = p.Images?
-                .FirstOrDefault(i => i.IsMain)?.ImageUrl
+                BrandName = p.Brand?.BrandName,
+                ProductPrice = (p.Variations ?? new List<ProductVariation>())
+                    .Any() ? p.Variations.Min(v => v.Price) : 0,
+                StockQuantity = p.TotalStock,
+                ImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl
             });
         }
+
+        // =========================
+        // GET BY BRAND
+        // =========================
         public async Task<IEnumerable<ProductCardResponse>> GetByBrandAsync(string brandId)
         {
-            var products = await _unitOfWork.ProductRepository
-                .GetAllAsync(p =>
-                    p.BrandId == brandId &&
-                    p.IsActive);
+            var products = await _unitOfWork.ProductRepository.GetAllAsync(
+                p => p.IsActive && p.BrandId == brandId,
+                p => p.Category,
+                p => p.Brand,
+                p => p.Images,
+                p => p.Variations
+            );
 
             return products.Select(p => new ProductCardResponse
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
-                ProductPrice = p.ProductPrice,
-                StockQuantity = p.StockQuantity,
                 ProductDescription = p.ProductDescription,
-
-                BrandName = p.Brand?.BrandName,
-
                 CategoryName = p.Category?.CategoryName,
-                ImageUrl = p.Images?
-                .FirstOrDefault(i => i.IsMain)?.ImageUrl
+                BrandName = p.Brand?.BrandName,
+                ProductPrice = (p.Variations ?? new List<ProductVariation>())
+                    .Any() ? p.Variations.Min(v => v.Price) : 0,
+                StockQuantity = p.TotalStock,
+                ImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl
             });
         }
     }

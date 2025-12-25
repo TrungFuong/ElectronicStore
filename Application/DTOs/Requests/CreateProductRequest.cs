@@ -5,21 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Application.DTOs.Requests
 {
-    
-    
-        public class CreateProductRequest
-        {
-            public string ProductName { get; set; } = null!;
-            public decimal ProductPrice { get; set; }
-            public int StockQuantity { get; set; }
-            public string ProductDescription { get; set; } = null!;
-            public string CategoryId { get; set; } = null!;
-            public string BrandId { get; set; } = null!;
-        }
-    
+    public class CreateProductRequest
+    {
+        [Required]
+        public string ProductName { get; set; } = null!;
 
+        public string? ProductDescription { get; set; }
 
+        [Required]
+        public string CategoryId { get; set; } = null!;
 
+        [Required]
+        public string BrandId { get; set; } = null!;
+    }
 }

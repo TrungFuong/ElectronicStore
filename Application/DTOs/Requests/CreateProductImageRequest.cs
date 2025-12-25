@@ -8,7 +8,7 @@ namespace Application.DTOs.Requests
 {
     public class CreateProductImageRequest
     {
-        public string ProductId { get; set; } = null!;
+        public string? ProductId { get; set; }
         public List<CreateProductImageItem> Images { get; set; } = new();
     }
 

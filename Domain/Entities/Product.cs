@@ -12,12 +12,13 @@ namespace Domain.Entities
         [Unicode]
         [MaxLength(50)]
         public string ProductName { get; set; } = string.Empty;
-        public int StockQuantity { get; set; }
+        [NotMapped]
+        public int TotalStock =>Variations?.Sum(v => v.StockQuantity) ?? 0;
         [Unicode]
         [MaxLength(200)]
         public string? ProductDescription { get; set; }
         [Column(TypeName = "decimal(18,2)")]
-        public decimal ProductPrice { get; set; }
+
         public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.Now);
         public DateOnly UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

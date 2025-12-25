@@ -1,13 +1,12 @@
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
 using Application.Interfaces;
-using Domain.Models;
-using Domain.Models.Responses;
+using Application.DTOs.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/product-variations")]
+    [Route("api/products/{productId}/variations")]
     public class ProductVariationController : ControllerBase
     {
         private readonly IProductVariationService _service;
@@ -17,10 +16,16 @@ namespace API.Controllers
             _service = service;
         }
 
+        
         [HttpPost]
-        public async Task<IActionResult> Create(CreateProductVariationRequest request)
+        public async Task<IActionResult> Create(
+            string productId,
+            [FromBody] CreateProductVariationRequest request)
         {
+            request.ProductId = productId; 
+
             await _service.CreateAsync(request);
+
             return Ok(new GeneralBoolResponse
             {
                 Success = true,
@@ -28,16 +33,23 @@ namespace API.Controllers
             });
         }
 
+        
         [HttpPut]
-        public async Task<IActionResult> Update(UpdateProductVariationRequest request)
+        public async Task<IActionResult> Update(
+            string productId,
+            [FromBody] UpdateProductVariationRequest request)
         {
+            // productId để validate nếu muốn
             var ok = await _service.UpdateAsync(request);
+
             if (!ok)
+            {
                 return NotFound(new GeneralBoolResponse
                 {
                     Success = false,
                     Message = "Variation not found"
                 });
+            }
 
             return Ok(new GeneralBoolResponse
             {
@@ -46,16 +58,22 @@ namespace API.Controllers
             });
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        
+        [HttpDelete("{variationId}")]
+        public async Task<IActionResult> Delete(
+            string productId,
+            string variationId)
         {
-            var ok = await _service.DeleteAsync(id);
+            var ok = await _service.DeleteAsync(variationId);
+
             if (!ok)
+            {
                 return NotFound(new GeneralBoolResponse
                 {
                     Success = false,
                     Message = "Variation not found"
                 });
+            }
 
             return Ok(new GeneralBoolResponse
             {
@@ -64,25 +82,39 @@ namespace API.Controllers
             });
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(string id)
+        
+        [HttpGet("{variationId}")]
+        public async Task<IActionResult> GetById(
+            string productId,
+            string variationId)
         {
-            var data = await _service.GetByIdAsync(id);
+            var data = await _service.GetByIdAsync(variationId);
+
             if (data == null)
+            {
                 return NotFound(new GeneralBoolResponse
                 {
                     Success = false,
                     Message = "Variation not found"
                 });
+            }
 
-            return Ok(new GeneralGetResponse { Data = data });
+            return Ok(new GeneralGetResponse
+            {
+                Data = data
+            });
         }
 
-        [HttpGet("product/{productId}")]
+        
+        [HttpGet]
         public async Task<IActionResult> GetByProduct(string productId)
         {
             var data = await _service.GetByProductIdAsync(productId);
-            return Ok(new GeneralGetResponse { Data = data });
+
+            return Ok(new GeneralGetResponse
+            {
+                Data = data
+            });
         }
     }
 }
