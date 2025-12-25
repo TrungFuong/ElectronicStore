@@ -1,11 +1,9 @@
-﻿using Application.DTOs.Auth;
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
-using Domain.Models.Requests;
-using Domain.Models.Responses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System;

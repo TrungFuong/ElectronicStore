@@ -4,6 +4,7 @@ using Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20251212144123_RequireEmail")]
+    partial class RequireEmail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,9 +67,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("BrandDescription")
-                        .HasMaxLength(500)
+                        .HasMaxLength(200)
                         .IsUnicode(true)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("BrandName")
                         .IsRequired()
@@ -86,8 +89,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("CategoryDescription")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
@@ -406,88 +409,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("Domain.Entities.ProductImage", b =>
-                {
-                    b.Property<string>("ImageId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsMain")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ImageId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductImages");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProductSpecification", b =>
-                {
-                    b.Property<string>("SpecificationId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("SpecKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("SpecValue")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("SpecificationId");
-
-                    b.HasIndex("ProductId", "SpecKey");
-
-                    b.ToTable("ProductSpecifications");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProductVariation", b =>
-                {
-                    b.Property<string>("VariationId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ProductId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.HasKey("VariationId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductVariations");
-                });
-
             modelBuilder.Entity("Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("TokenId")
@@ -553,77 +474,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("StaffId");
 
                     b.ToTable("Staffs");
-                });
-
-            modelBuilder.Entity("Domain.Entities.VariationAttribute", b =>
-                {
-                    b.Property<int>("AttributeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeId"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("AttributeId");
-
-                    b.ToTable("VariationAttributes");
-
-                    b.HasData(
-                        new
-                        {
-                            AttributeId = 1,
-                            Name = "Màu sắc"
-                        },
-                        new
-                        {
-                            AttributeId = 2,
-                            Name = "Dung lượng"
-                        },
-                        new
-                        {
-                            AttributeId = 3,
-                            Name = "RAM"
-                        },
-                        new
-                        {
-                            AttributeId = 4,
-                            Name = "Kích thước"
-                        },
-                        new
-                        {
-                            AttributeId = 5,
-                            Name = "Phiên bản"
-                        });
-                });
-
-            modelBuilder.Entity("Domain.Entities.VariationOption", b =>
-                {
-                    b.Property<string>("OptionId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AttributeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("VariationId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("OptionId");
-
-                    b.HasIndex("AttributeId");
-
-                    b.HasIndex("VariationId");
-
-                    b.ToTable("VariationOptions");
                 });
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
@@ -743,39 +593,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Domain.Entities.ProductImage", b =>
-                {
-                    b.HasOne("Domain.Entities.Product", "Product")
-                        .WithMany("Images")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProductSpecification", b =>
-                {
-                    b.HasOne("Domain.Entities.Product", "Product")
-                        .WithMany("Specifications")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProductVariation", b =>
-                {
-                    b.HasOne("Domain.Entities.Product", "Product")
-                        .WithMany("Variations")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
@@ -785,25 +602,6 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("Domain.Entities.VariationOption", b =>
-                {
-                    b.HasOne("Domain.Entities.VariationAttribute", "Attribute")
-                        .WithMany()
-                        .HasForeignKey("AttributeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.ProductVariation", "Variation")
-                        .WithMany("Options")
-                        .HasForeignKey("VariationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attribute");
-
-                    b.Navigation("Variation");
                 });
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
@@ -853,18 +651,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
                 {
-                    b.Navigation("Images");
-
                     b.Navigation("OrderDetails");
-
-                    b.Navigation("Specifications");
-
-                    b.Navigation("Variations");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProductVariation", b =>
-                {
-                    b.Navigation("Options");
                 });
 
             modelBuilder.Entity("Domain.Entities.Staff", b =>
