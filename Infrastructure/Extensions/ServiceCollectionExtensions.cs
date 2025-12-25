@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Implementations;
+using Application.Interfaces;
 using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Infrastructure.Repositories;
@@ -22,6 +23,7 @@ namespace Infrastructure.Extensions
             // Register Repositories
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IStaffRepository, StaffRepository>();
 
             // Register UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -29,6 +31,7 @@ namespace Infrastructure.Extensions
             // Register security utilities
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<IAdminAccountService, AdminAccountService>();
 
             return services;
         }

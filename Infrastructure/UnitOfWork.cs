@@ -29,6 +29,7 @@ namespace Infrastructure
         //private ICustomerRepository _customerRepository;
         //private IProductRepository _productRepository;
         private IRefreshTokenRepository _refreshTokenRepository;
+        private IStaffRepository _staffRepository;
 
         public UnitOfWork(DBContext context)
         {
@@ -40,6 +41,26 @@ namespace Infrastructure
 
         public IRefreshTokenRepository RefreshTokenRepository
             => _refreshTokenRepository ??= new RefreshTokenRepository(_context);
+
+        public IStaffRepository StaffRepository
+            => _staffRepository ??= new StaffRepository(_context);
+
+        public async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                await action();
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
         public int Commit()
         {
