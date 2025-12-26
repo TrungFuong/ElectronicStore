@@ -16,65 +16,162 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        // =========================
-        // GENERATE PRODUCT ID
-        // =========================
-        private async Task<string> GenerateProductIdAsync()
+        // Generate id by prefix + running number (root only)
+        private async Task<string> GenerateIdAsync<TEntity>(
+           Func<IUnitOfWork, IGenericsRepository<TEntity>> repoSelector,
+           Func<TEntity, string> idSelector,
+           string prefix
+       ) where TEntity : class
         {
-            var lastProduct = (await _unitOfWork.ProductRepository.GetAllAsync())
-                .OrderByDescending(p => p.ProductId)
+            var repo = repoSelector(_unitOfWork);
+            var last = (await repo.GetAllAsync())
+                .OrderByDescending(e => idSelector(e))
                 .FirstOrDefault();
 
-            if (lastProduct == null)
-                return Prefixes.PRODUCT_ID_PREFIX + "0001";
+            if (last == null)
+                return prefix + string.Format(Prefixes.ID_FORMAT, 1);
 
-            var numberPart = lastProduct.ProductId
-                .Substring(Prefixes.PRODUCT_ID_PREFIX.Length);
-
-            var nextNumber = int.Parse(numberPart) + 1;
-
-            return Prefixes.PRODUCT_ID_PREFIX + nextNumber.ToString("D4");
+            var num = int.Parse(idSelector(last).Substring(prefix.Length)) + 1;
+            return prefix + string.Format(Prefixes.ID_FORMAT, num);
         }
 
-        // =========================
-        // CREATE PRODUCT (STEP 1)
-        // =========================
-        public async Task<ProductResponse> CreateProductAsync(CreateProductRequest request)
+        // ================= CREATE =================
+        public async Task<bool> CreateProductAsync(CreateProductRequest request)
         {
-            var brand = await _unitOfWork.BrandRepository
-                .GetAsync(b => b.BrandId == request.BrandId);
+            if (!request.Variations.Any())
+                throw new Exception("Product phải có ít nhất 1 variation");
 
-            var category = await _unitOfWork.CategoryRepository
-                .GetAsync(c => c.CategoryId == request.CategoryId);
+            if (request.Images.Count(i => i.IsMain) > 1)
+                throw new Exception("Chỉ được phép 1 ảnh main");
 
-            if (brand == null || category == null)
+            if (await _unitOfWork.BrandRepository.GetAsync(b => b.BrandId == request.BrandId) == null ||
+                await _unitOfWork.CategoryRepository.GetAsync(c => c.CategoryId == request.CategoryId) == null)
                 throw new Exception("Brand hoặc Category không tồn tại");
 
-            var productId = await GenerateProductIdAsync();
+            var productId = await GenerateIdAsync(
+                u => u.ProductRepository,
+                p => p.ProductId,
+                Prefixes.PRODUCT_ID_PREFIX);
 
-            var product = new Product
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                ProductId = productId,
-                ProductName = request.ProductName,
-                ProductDescription = request.ProductDescription,
-                CategoryId = request.CategoryId,
-                BrandId = request.BrandId,
-                CreatedAt = DateOnly.FromDateTime(DateTime.Now),
-                IsActive = true
-            };
+                await _unitOfWork.ProductRepository.AddAsync(new Product
+                {
+                    ProductId = productId,
+                    ProductName = request.ProductName,
+                    ProductDescription = request.ProductDescription,
+                    CategoryId = request.CategoryId,
+                    BrandId = request.BrandId,
+                    CreatedAt = DateOnly.FromDateTime(DateTime.Now),
+                    IsActive = true
+                });
 
-            await _unitOfWork.ProductRepository.AddAsync(product);
-            await _unitOfWork.CommitAsync();
+                // -------- VARIATION + OPTION --------
 
-            return new ProductResponse
-            {
-                ProductId = productId
-            };
+                // 🔹 LẤY VARIATION ID 1 LẦN
+                var lastVariationId = await GenerateIdAsync(
+                    u => u.ProductVariationRepository,
+                    x => x.VariationId,
+                    Prefixes.VARIATION_ID_PREFIX);
+
+                var variationIndex =
+                    int.Parse(lastVariationId.Substring(Prefixes.VARIATION_ID_PREFIX.Length));
+
+                // 🔹 LẤY OPTION ID 1 LẦN
+                var lastOptionId = await GenerateIdAsync(
+                    u => u.VariationOptionRepository,
+                    o => o.OptionId,
+                    Prefixes.OPTION_ID_PREFIX);
+
+                var optionIndex =
+                    int.Parse(lastOptionId.Substring(Prefixes.OPTION_ID_PREFIX.Length));
+
+                foreach (var v in request.Variations)
+                {
+                    // ===== CREATE VARIATION =====
+                    variationIndex++;
+
+                    var variationId = Prefixes.VARIATION_ID_PREFIX
+                                      + string.Format(Prefixes.ID_FORMAT, variationIndex);
+
+                    await _unitOfWork.ProductVariationRepository.AddAsync(
+                        new ProductVariation
+                        {
+                            VariationId = variationId,
+                            ProductId = productId,
+                            Price = v.Price,
+                            StockQuantity = v.StockQuantity
+                        });
+
+                    // ===== CREATE OPTIONS =====
+                    foreach (var opt in v.Options)
+                    {
+                        optionIndex++;
+
+                        await _unitOfWork.VariationOptionRepository.AddAsync(
+                            new VariationOption
+                            {
+                                OptionId = Prefixes.OPTION_ID_PREFIX
+                                           + string.Format(Prefixes.ID_FORMAT, optionIndex),
+                                VariationId = variationId,
+                                AttributeId = opt.AttributeId,
+                                Value = opt.OptionValue
+                            });
+                    }
+                }
+
+
+                // -------- SPECIFICATION --------
+                var lastSpecId = await GenerateIdAsync(
+                    u => u.ProductSpecificationRepository,
+                    s => s.SpecificationId,
+                    Prefixes.SPECIFICATION_ID_PREFIX);
+                var specIndex = int.Parse(lastSpecId.Substring(Prefixes.SPECIFICATION_ID_PREFIX.Length));
+
+                foreach (var s in request.Specifications)
+                {
+                    specIndex++;
+                    await _unitOfWork.ProductSpecificationRepository.AddAsync(
+                        new ProductSpecification
+                        {
+                            SpecificationId = Prefixes.SPECIFICATION_ID_PREFIX
+                                              + string.Format(Prefixes.ID_FORMAT, specIndex),
+                            ProductId = productId,
+                            SpecKey = s.SpecKey,
+                            SpecValue = s.SpecValue
+                        });
+                }
+
+                // -------- IMAGE --------
+                var lastImgId = await GenerateIdAsync(
+                    u => u.ProductImageRepository,
+                    i => i.ImageId,
+                    Prefixes.IMAGE_ID_PREFIX);
+                var imgIndex = int.Parse(lastImgId.Substring(Prefixes.IMAGE_ID_PREFIX.Length));
+
+                foreach (var img in request.Images)
+                {
+                    imgIndex++;
+                    await _unitOfWork.ProductImageRepository.AddAsync(
+                        new ProductImage
+                        {
+                            ImageId = Prefixes.IMAGE_ID_PREFIX
+                                      + string.Format(Prefixes.ID_FORMAT, imgIndex),
+                            ProductId = productId,
+                            ImageUrl = img.ImageUrl,
+                            IsMain = img.IsMain,
+                            IsActive = true
+                        });
+                }
+
+            });
+            return true;
+
+
+
         }
 
-        // =========================
-        // GET ALL PRODUCTS (CARD)
-        // =========================
+        // ========================= READ =========================
         public async Task<IEnumerable<ProductResponse>> GetAllAsync()
         {
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
@@ -85,6 +182,21 @@ namespace Application.Services
                 p => p.Variations
             );
 
+            var variationIds = products
+                .SelectMany(p => p.Variations)
+                .Select(v => v.VariationId)
+                .ToList();
+
+            var options = await _unitOfWork.VariationOptionRepository
+                .GetAllAsync(o => variationIds.Contains(o.VariationId));
+
+            var attributes = await _unitOfWork.VariationAttributeRepository.GetAllAsync();
+
+            var productIds = products.Select(p => p.ProductId).ToList();
+
+            var specs = await _unitOfWork.ProductSpecificationRepository
+                .GetAllAsync(s => productIds.Contains(s.ProductId));
+
             return products.Select(p => new ProductResponse
             {
                 ProductId = p.ProductId,
@@ -92,68 +204,21 @@ namespace Application.Services
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
-
-                ProductPrice = (p.Variations ?? new List<ProductVariation>())
-                    .Any() ? p.Variations.Min(v => v.Price) : 0,
-
+                ProductPrice = p.Variations.Any() ? p.Variations.Min(v => v.Price) : 0,
                 StockQuantity = p.TotalStock,
 
-                Images = (p.Images ?? new List<ProductImage>())
-                    .Where(i => i.IsMain)
-                    .Select(i => new ProductImageResponse
-                    {
-                        ImageUrl = i.ImageUrl,
-                        IsMain = true
-                    }).ToList()
-            });
-        }
+                Images = p.Images.Select(i => new ProductImageResponse
+                {
+                    ImageId = i.ImageId,
+                    ImageUrl = i.ImageUrl,
+                    IsMain = i.IsMain
+                }).ToList(),
 
-        // =========================
-        // GET PRODUCT BY ID (FULL)
-        // =========================
-        public async Task<ProductResponse?> GetByIdAsync(string productId)
-        {
-            var product = await _unitOfWork.ProductRepository.GetAsync(
-                p => p.ProductId == productId && p.IsActive,
-                p => p.Category,
-                p => p.Brand,
-                p => p.Images,
-                p => p.Variations
-            );
-
-            if (product == null) return null;
-
-            // 🔥 LOAD OPTIONS RIÊNG
-            var variationIds = product.Variations.Select(v => v.VariationId).ToList();
-
-            var options = await _unitOfWork.VariationOptionRepository
-                .GetAllAsync(o => variationIds.Contains(o.VariationId));
-
-            var attributes = await _unitOfWork.VariationAttributeRepository.GetAllAsync();
-
-            var specifications = await _unitOfWork.ProductSpecificationRepository
-                .GetAllAsync(s => s.ProductId == productId);
-
-            return new ProductResponse
-            {
-                ProductId = product.ProductId,
-                ProductName = product.ProductName,
-                ProductDescription = product.ProductDescription,
-                CategoryName = product.Category?.CategoryName,
-                BrandName = product.Brand?.BrandName,
-                    
-                ProductPrice = product.Variations.Any()
-                    ? product.Variations.Min(v => v.Price)
-                    : 0,
-
-                StockQuantity = product.TotalStock,
-
-                Variations = product.Variations.Select(v => new ProductVariationResponse
+                Variations = p.Variations.Select(v => new ProductVariationResponse
                 {
                     VariationId = v.VariationId,
                     Price = v.Price,
                     StockQuantity = v.StockQuantity,
-
                     Options = options
                         .Where(o => o.VariationId == v.VariationId)
                         .Select(o => new VariationOptionResponse
@@ -163,75 +228,127 @@ namespace Application.Services
                                 .FirstOrDefault(a => a.AttributeId == o.AttributeId)?.Name ?? "",
                             Value = o.Value
                         }).ToList()
-
                 }).ToList(),
 
-                Specifications = specifications.Select(s => new ProductSpecificationResponse
-                {
-                    SpecificationId = s.SpecificationId,
-                    SpecKey = s.SpecKey,
-                    SpecValue = s.SpecValue
-                }).ToList(),
+                Specifications = specs
+                    .Where(s => s.ProductId == p.ProductId)
+                    .Select(s => new ProductSpecificationResponse
+                    {
+                        SpecificationId = s.SpecificationId,
+                        SpecKey = s.SpecKey,
+                        SpecValue = s.SpecValue
+                    }).ToList()
+            });
+        }
 
-                Images = product.Images.Select(i => new ProductImageResponse
-                {
-                    ImageId = i.ImageId,
-                    ImageUrl = i.ImageUrl,
-                    IsMain = i.IsMain
-                }).ToList()
+        public async Task<ProductResponse?> GetByIdAsync(string productId)
+        {
+            var product = await _unitOfWork.ProductRepository.GetAsync(
+                p => p.ProductId == productId && p.IsActive,
+                p => p.Category, p => p.Brand, p => p.Images, p => p.Variations);
+
+            if (product == null) return null;
+
+            return new ProductResponse
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductDescription = product.ProductDescription,
+                CategoryName = product.Category?.CategoryName,
+                BrandName = product.Brand?.BrandName,
+                ProductPrice = product.Variations.Any() ? product.Variations.Min(v => v.Price) : 0,
+                StockQuantity = product.TotalStock,
+                Images = product.Images.Select(i =>
+                    new ProductImageResponse { ImageId = i.ImageId, ImageUrl = i.ImageUrl, IsMain = i.IsMain }
+                ).ToList()
             };
         }
 
-
-        // =========================
-        // UPDATE PRODUCT
-        // =========================
+        // ========================= UPDATE =========================
         public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
         {
             var product = await _unitOfWork.ProductRepository
                 .GetAsync(p => p.ProductId == request.ProductId && p.IsActive);
-
             if (product == null) return false;
 
-            product.ProductName = request.ProductName;
-            product.ProductDescription = request.ProductDescription;
-            product.CategoryId = request.CategoryId;
-            product.BrandId = request.BrandId;
-            product.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                if (!string.IsNullOrWhiteSpace(request.ProductName))
+                    product.ProductName = request.ProductName;
+                if (!string.IsNullOrWhiteSpace(request.ProductDescription))
+                    product.ProductDescription = request.ProductDescription;
+                if (!string.IsNullOrWhiteSpace(request.CategoryId))
+                    product.CategoryId = request.CategoryId;
+                if (!string.IsNullOrWhiteSpace(request.BrandId))
+                    product.BrandId = request.BrandId;
 
-            _unitOfWork.ProductRepository.Update(product);
-            await _unitOfWork.CommitAsync();
+                product.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+                _unitOfWork.ProductRepository.Update(product);
+
+                // IMAGE UPDATE FIX
+                var lastImgId = await GenerateIdAsync(
+                    u => u.ProductImageRepository,
+                    i => i.ImageId,
+                    Prefixes.IMAGE_ID_PREFIX);
+                var imgIndex = int.Parse(lastImgId.Substring(Prefixes.IMAGE_ID_PREFIX.Length));
+
+                foreach (var img in request.Images)
+                {
+                    if (img.IsDeleted && img.ImageId != null)
+                    {
+                        var di = await _unitOfWork.ProductImageRepository
+                            .GetAsync(i => i.ImageId == img.ImageId);
+                        if (di != null) _unitOfWork.ProductImageRepository.Delete(di);
+                        continue;
+                    }
+
+                    if (img.ImageId == null)
+                    {
+                        imgIndex++;
+                        await _unitOfWork.ProductImageRepository.AddAsync(
+                            new ProductImage
+                            {
+                                ImageId = Prefixes.IMAGE_ID_PREFIX
+                                          + string.Format(Prefixes.ID_FORMAT, imgIndex),
+                                ProductId = product.ProductId,
+                                ImageUrl = img.ImageUrl,
+                                IsMain = img.IsMain
+                            });
+                        continue;
+                    }
+
+                    var ei = await _unitOfWork.ProductImageRepository
+                        .GetAsync(i => i.ImageId == img.ImageId);
+                    if (ei == null) continue;
+
+                    ei.ImageUrl = img.ImageUrl;
+                    ei.IsMain = img.IsMain;
+                    _unitOfWork.ProductImageRepository.Update(ei);
+                }
+            });
+
             return true;
         }
 
-        // =========================
-        // DELETE PRODUCT (SOFT)
-        // =========================
+        // ========================= DELETE =========================
         public async Task<bool> DeleteProductAsync(string productId)
         {
             var product = await _unitOfWork.ProductRepository
                 .GetAsync(p => p.ProductId == productId && p.IsActive);
-
             if (product == null) return false;
 
-            product.IsActive = false;
-            _unitOfWork.ProductRepository.Update(product);
+            
+            _unitOfWork.ProductRepository.SoftDelete(product);
             await _unitOfWork.CommitAsync();
             return true;
         }
 
-        // =========================
-        // GET BY CATEGORY
-        // =========================
+        // ========================= FILTER =========================
         public async Task<IEnumerable<ProductCardResponse>> GetByCategoryAsync(string categoryId)
         {
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
                 p => p.IsActive && p.CategoryId == categoryId,
-                p => p.Category,
-                p => p.Brand,
-                p => p.Images,
-                p => p.Variations
-            );
+                p => p.Category, p => p.Brand, p => p.Images, p => p.Variations);
 
             return products.Select(p => new ProductCardResponse
             {
@@ -240,25 +357,17 @@ namespace Application.Services
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
-                ProductPrice = (p.Variations ?? new List<ProductVariation>())
-                    .Any() ? p.Variations.Min(v => v.Price) : 0,
+                ProductPrice = p.Variations.Any() ? p.Variations.Min(v => v.Price) : 0,
                 StockQuantity = p.TotalStock,
                 ImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl
             });
         }
 
-        // =========================
-        // GET BY BRAND
-        // =========================
         public async Task<IEnumerable<ProductCardResponse>> GetByBrandAsync(string brandId)
         {
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
                 p => p.IsActive && p.BrandId == brandId,
-                p => p.Category,
-                p => p.Brand,
-                p => p.Images,
-                p => p.Variations
-            );
+                p => p.Category, p => p.Brand, p => p.Images, p => p.Variations);
 
             return products.Select(p => new ProductCardResponse
             {
@@ -267,8 +376,7 @@ namespace Application.Services
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
-                ProductPrice = (p.Variations ?? new List<ProductVariation>())
-                    .Any() ? p.Variations.Min(v => v.Price) : 0,
+                ProductPrice = p.Variations.Any() ? p.Variations.Min(v => v.Price) : 0,
                 StockQuantity = p.TotalStock,
                 ImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl
             });

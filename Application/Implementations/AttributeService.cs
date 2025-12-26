@@ -13,14 +13,26 @@ using System.Threading.Tasks;
 
 namespace Application.Implementations
 {
-    public class ProductImageService : IProductImageService
+    public class AttributeService : IAttributeService
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public ProductImageService(IUnitOfWork unitOfWork)
+        public AttributeService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
-        
+
+        public async Task<IEnumerable<AttributeResponse>> GetAllAsync()
+        {
+            var attributes = await _unitOfWork.VariationAttributeRepository.GetAllAsync();
+
+            return attributes.Select(a => new AttributeResponse
+            {
+                AttributeId = a.AttributeId,
+                Name = a.Name
+            });
+        }
+
+
     }
 }

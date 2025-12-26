@@ -28,6 +28,8 @@ namespace Application.Extensions
 
             services.AddScoped<IProductImageService, ProductImageService>();
 
+            services.AddScoped<IAttributeService, AttributeService>();
+
             return services;
         }
     }

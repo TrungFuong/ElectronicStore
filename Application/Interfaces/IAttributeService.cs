@@ -1,5 +1,4 @@
-﻿using Application.DTOs.Requests;
-using Application.DTOs.Responses;
+﻿using Application.DTOs.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
-    public interface IProductSpecificationService
+    public interface IAttributeService
     {
-        
+        Task<IEnumerable<AttributeResponse>> GetAllAsync();
     }
-
 }

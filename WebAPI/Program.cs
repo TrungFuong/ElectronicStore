@@ -53,6 +53,8 @@ builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
+app.UseStaticFiles();
+
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();

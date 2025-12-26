@@ -10,12 +10,7 @@ namespace Application.Interfaces
 {
     public interface IProductVariationService
     {
-        Task<bool> CreateAsync(CreateProductVariationRequest request);
-        Task<bool> UpdateAsync(UpdateProductVariationRequest request);
-        Task<bool> DeleteAsync(string variationId);
-
-        Task<IEnumerable<ProductVariationResponse>> GetByProductIdAsync(string productId);
-        Task<ProductVariationResponse?> GetByIdAsync(string variationId);
+        
     }
 
 }

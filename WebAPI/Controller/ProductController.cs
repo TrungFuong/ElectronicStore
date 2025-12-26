@@ -16,9 +16,7 @@ namespace API.Controllers
             _productService = productService;
         }
 
-        // =========================
-        // CREATE PRODUCT
-        // =========================
+        // CREATE FULL PRODUCT (product + variations + specs + images)
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
         {
@@ -28,13 +26,11 @@ namespace API.Controllers
             {
                 Success = true,
                 Message = "Create product successfully",
-                Data = result   
+                Data = result
             });
         }
 
-        // =========================
-        // GET ALL
-        // =========================
+        // GET ALL PRODUCTS
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -48,9 +44,7 @@ namespace API.Controllers
             });
         }
 
-        // =========================
-        // GET BY ID
-        // =========================
+        // GET PRODUCT BY ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
@@ -72,12 +66,11 @@ namespace API.Controllers
             });
         }
 
-        // =========================
-        // UPDATE PRODUCT
-        // =========================
-        [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateProductRequest request)
+        // UPDATE PRODUCT INFO
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(string id, [FromBody] UpdateProductRequest request)
         {
+            request.ProductId = id;
             var ok = await _productService.UpdateProductAsync(request);
 
             if (!ok)
@@ -96,9 +89,7 @@ namespace API.Controllers
             });
         }
 
-        // =========================
-        // DELETE PRODUCT (SOFT)
-        // =========================
+        // SOFT DELETE PRODUCT
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
@@ -120,9 +111,7 @@ namespace API.Controllers
             });
         }
 
-        // =========================
-        // GET BY CATEGORY
-        // =========================
+        // GET PRODUCTS BY CATEGORY
         [HttpGet("category/{categoryId}")]
         public async Task<IActionResult> GetByCategory(string categoryId)
         {
@@ -136,9 +125,7 @@ namespace API.Controllers
             });
         }
 
-        // =========================
-        // GET BY BRAND
-        // =========================
+        // GET PRODUCTS BY BRAND
         [HttpGet("brand/{brandId}")]
         public async Task<IActionResult> GetByBrand(string brandId)
         {
@@ -150,6 +137,26 @@ namespace API.Controllers
                 Message = "Get products by brand successfully",
                 Data = products
             });
+        }
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = Guid.NewGuid() + ext;
+
+            var folder = Path.Combine("wwwroot/images/products");
+            Directory.CreateDirectory(folder);
+
+            var path = Path.Combine(folder, fileName);
+            using var stream = new FileStream(path, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            var url = $"{Request.Scheme}://{Request.Host}/images/products/{fileName}";
+
+            return Ok(new { imageUrl = url });
         }
     }
 }
