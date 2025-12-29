@@ -43,8 +43,12 @@ namespace Infrastructure.Extensions
             // Category repository & Service
             
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            // Cart Repository
+            services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<ICartItemRepository, CartItemRepository>();
+            // Product Variation Repository
+            services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
 
-            
             return services;
         }
     }

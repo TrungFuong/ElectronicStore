@@ -18,14 +18,14 @@ namespace Domain.Interfaces
         IRefreshTokenRepository RefreshTokenRepository { get; }
         IStaffRepository StaffRepository { get; }
         Task ExecuteInTransactionAsync(Func<Task> action);
-        IGenericsRepository<ProductVariation> ProductVariationRepository { get; }
-
+        IProductVariationRepository ProductVariationRepository { get; }
         IGenericsRepository<ProductSpecification> ProductSpecificationRepository { get; }
 
         IGenericsRepository<ProductImage> ProductImageRepository { get; }
 
         IGenericsRepository<VariationAttribute> VariationAttributeRepository { get; }
-
+        ICartRepository CartRepository { get; }
+        ICartItemRepository CartItemRepository { get; }
         IGenericsRepository<VariationOption> VariationOptionRepository { get; }
         Task<int> CommitAsync();
         int Commit();
