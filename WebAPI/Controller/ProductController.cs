@@ -1,7 +1,14 @@
-﻿using Application.DTOs.Requests;
+﻿using Application.DTOs.Auth;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
+using Domain.Entities;
+using Domain.Models;
+using Domain.Models.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+
 
 namespace API.Controllers
 {
@@ -91,6 +98,7 @@ namespace API.Controllers
 
         // SOFT DELETE PRODUCT
         [HttpDelete("{id}")]
+        //[Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(string id)
         {
             var ok = await _productService.DeleteProductAsync(id);

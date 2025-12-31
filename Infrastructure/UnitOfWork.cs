@@ -32,6 +32,7 @@ namespace Infrastructure
         private IRefreshTokenRepository _refreshTokenRepository;
         private IStaffRepository _staffRepository;
         private IProductRepository _productRepository;
+        private IProductRepository _productRepository;
 
         private IGenericsRepository<ProductVariation>? _productVariationRepository;
         private IGenericsRepository<ProductSpecification>? _productSpecificationRepository;
@@ -40,6 +41,10 @@ namespace Infrastructure
         private IGenericsRepository<VariationOption>? _variationOptionRepository;
 
         // orders
+        private IOrderRepository _orderRepository;
+
+        // new repositories
+        private IDiscountRepository _discountRepository;
         private IOrderRepository _orderRepository;
 
         public UnitOfWork(DBContext context)
@@ -100,6 +105,20 @@ namespace Infrastructure
 
         public IOrderRepository OrderRepository
         => _orderRepository ??= new OrderRepository(_context);
+        public IBrandRepository BrandRepository
+        => _brandRepository ??= new BrandRepository(_context);
+
+        public ICategoryRepository CategoryRepository
+        => _categoryRepository ??= new CategoryRepository(_context);
+
+        public IProductRepository ProductRepository
+        => _productRepository ??= new ProductRepository(_context);
+
+        public IDiscountRepository DiscountRepository
+            => _discountRepository ??= new DiscountRepository(_context);
+
+        public IOrderRepository OrderRepository
+            => _orderRepository ??= new OrderRepository(_context);
 
         public int Commit()
         {

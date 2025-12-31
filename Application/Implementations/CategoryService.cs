@@ -4,6 +4,11 @@ using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Application.Implementations
 {
@@ -37,6 +42,8 @@ namespace Application.Implementations
         // CREATE 
         public async Task CreateAsync(CreateCategoryRequest request)
         {
+            var count = await _unitOfWork.CategoryRepository.CountAsync();
+
             var category = new Category
             {
                 CategoryId = await GenerateCategoryIdAsync(),

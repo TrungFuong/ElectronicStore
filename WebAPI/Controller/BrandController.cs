@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Requests;
+﻿using Application.DTOs.Auth;
+using Application.DTOs.Requests;
 using Application.Interfaces;
 using Domain.Entities;
 using Application.DTOs.Responses;

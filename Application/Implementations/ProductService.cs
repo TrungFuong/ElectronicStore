@@ -59,11 +59,13 @@ namespace Application.Services
                 await _unitOfWork.ProductRepository.AddAsync(new Product
                 {
                     ProductId = productId,
-                    ProductName = request.ProductName,
-                    ProductDescription = request.ProductDescription,
-                    CategoryId = request.CategoryId,
-                    BrandId = request.BrandId,
-                    CreatedAt = DateOnly.FromDateTime(DateTime.Now),
+                ProductName = request.ProductName,
+                ProductPrice = request.ProductPrice,
+                StockQuantity = request.StockQuantity,
+                ProductDescription = request.ProductDescription,
+                CategoryId = request.CategoryId,
+                BrandId = request.BrandId,
+                CreatedAt = DateOnly.FromDateTime(DateTime.Now),
                     IsActive = request.IsActive ?? true
                 });
 
@@ -161,7 +163,7 @@ namespace Application.Services
                             ProductId = productId,
                             ImageUrl = img.ImageUrl,
                             IsMain = img.IsMain,
-                            IsActive = true
+                IsActive = true
                         });
                 }
 
@@ -202,6 +204,8 @@ namespace Application.Services
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
+                ProductPrice = p.ProductPrice,
+                StockQuantity = p.StockQuantity,
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
@@ -244,6 +248,7 @@ namespace Application.Services
             });
         }
 
+        // GET BY ID
         public async Task<ProductResponse?> GetByIdAsync(string productId)
         {
             // 1️⃣ Lấy product + quan hệ cấp 1
@@ -279,6 +284,8 @@ namespace Application.Services
             {
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
+                ProductPrice = product.ProductPrice,
+                StockQuantity = product.StockQuantity,
                 ProductDescription = product.ProductDescription,
                 CategoryName = product.Category?.CategoryName,
                 CategoryId = product.Category?.CategoryId,
@@ -346,25 +353,25 @@ namespace Application.Services
 
                 if (request.ProductName != null)
                 {
-                    product.ProductName = request.ProductName;
+            product.ProductName = request.ProductName;
                     productChanged = true;
                 }
 
                 if (request.ProductDescription != null)
                 {
-                    product.ProductDescription = request.ProductDescription;
+            product.ProductDescription = request.ProductDescription;
                     productChanged = true;
                 }
 
                 if (request.CategoryId != null)
                 {
-                    product.CategoryId = request.CategoryId;
+            product.CategoryId = request.CategoryId;
                     productChanged = true;
                 }
 
                 if (request.BrandId != null)
                 {
-                    product.BrandId = request.BrandId;
+            product.BrandId = request.BrandId;
                     productChanged = true;
                 }
 
@@ -377,7 +384,7 @@ namespace Application.Services
 
                 if (productChanged)
                 {
-                    product.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+            product.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
                     _unitOfWork.ProductRepository.Update(product);
                 }
 
@@ -604,7 +611,8 @@ namespace Application.Services
                 .GetAsync(p => p.ProductId == productId && p.IsActive);
             if (product == null) return false;
 
-            
+            if (product == null) return false;
+
             _unitOfWork.ProductRepository.SoftDelete(product);
             await _unitOfWork.CommitAsync();
             return true;
@@ -704,6 +712,8 @@ namespace Application.Services
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
+                ProductPrice = p.ProductPrice,
+                StockQuantity = p.StockQuantity,
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
