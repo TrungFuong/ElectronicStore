@@ -1,4 +1,6 @@
 using Application.Interfaces;
+using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

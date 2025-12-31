@@ -60,8 +60,7 @@ namespace Application.Services
                 {
                     ProductId = productId,
                 ProductName = request.ProductName,
-                ProductPrice = request.ProductPrice,
-                StockQuantity = request.StockQuantity,
+                
                 ProductDescription = request.ProductDescription,
                 CategoryId = request.CategoryId,
                 BrandId = request.BrandId,
@@ -204,8 +203,7 @@ namespace Application.Services
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
-                ProductPrice = p.ProductPrice,
-                StockQuantity = p.StockQuantity,
+                
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,
@@ -284,8 +282,7 @@ namespace Application.Services
             {
                 ProductId = product.ProductId,
                 ProductName = product.ProductName,
-                ProductPrice = product.ProductPrice,
-                StockQuantity = product.StockQuantity,
+                
                 ProductDescription = product.ProductDescription,
                 CategoryName = product.Category?.CategoryName,
                 CategoryId = product.Category?.CategoryId,
@@ -712,8 +709,7 @@ namespace Application.Services
             {
                 ProductId = p.ProductId,
                 ProductName = p.ProductName,
-                ProductPrice = p.ProductPrice,
-                StockQuantity = p.StockQuantity,
+                
                 ProductDescription = p.ProductDescription,
                 CategoryName = p.Category?.CategoryName,
                 BrandName = p.Brand?.BrandName,

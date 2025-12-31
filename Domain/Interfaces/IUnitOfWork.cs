@@ -34,7 +34,6 @@ namespace Domain.Interfaces
         IGenericsRepository<VariationOption> VariationOptionRepository { get; }
 
         // Orders
-        IOrderRepository OrderRepository { get; }
 
         Task<int> CommitAsync();
         int Commit();
