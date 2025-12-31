@@ -15,6 +15,8 @@ namespace Application.DTOs.Requests
         public string ProductDescription { get; set; } = null!;
         public string CategoryId { get; set; } = null!;
         public string BrandId { get; set; } = null!;
+        // Allow specifying active state when creating
+        public bool? IsActive { get; set; }
 
         // ===== VARIATIONS (GIÁ + TỒN Ở ĐÂY) =====
         public List<ProductVariationRequest> Variations { get; set; } = new();

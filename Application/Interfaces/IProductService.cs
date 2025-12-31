@@ -31,5 +31,7 @@ namespace Application.Interfaces
         // Lấy sản phẩm theo brand
         Task<IEnumerable<ProductCardResponse>> GetByBrandAsync(string brandId);
 
+        //tìm kiếm 
+        Task<IEnumerable<ProductResponse>> SearchAsync(ProductSearchRequest request);
     }
 }

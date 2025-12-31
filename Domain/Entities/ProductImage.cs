@@ -17,7 +17,7 @@ namespace Domain.Entities
         public Product Product { get; set; }
 
 
-        [Required, MaxLength(255)]
+        [Required, MaxLength(1024)]
         public string ImageUrl { get; set; }
 
         public bool IsMain { get; set; } = false; // true = ảnh chính, false = ảnh phụ

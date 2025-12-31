@@ -158,5 +158,15 @@ namespace API.Controllers
 
             return Ok(new { imageUrl = url });
         }
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] ProductSearchRequest request)
+        {
+            var data = await _productService.SearchAsync(request);
+            return Ok(new
+            {
+                success = true,
+                data
+            });
+        }
     }
 }

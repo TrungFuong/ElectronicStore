@@ -11,6 +11,8 @@ namespace Application.DTOs.Requests
         public string? ProductDescription { get; set; }
         public string? CategoryId { get; set; }
         public string? BrandId { get; set; }
+        // Allow toggling active state in update
+        public bool? IsActive { get; set; }
 
         // ===== VARIATIONS =====
         public List<UpdateProductVariationRequest> Variations { get; set; } = new();
@@ -54,7 +56,7 @@ namespace Application.DTOs.Requests
     public class UpdateProductImageRequest
     {
         public string? ImageId { get; set; }       // null = thêm mới
-        public string ImageUrl { get; set; } = null!;
+        public string ImageUrl { get; set; } 
         public bool IsMain { get; set; }
         public bool IsDeleted { get; set; }
     }
