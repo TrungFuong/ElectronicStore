@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20251223195953_InitialCreate")]
+    [Migration("20251231154312_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -123,7 +123,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("CustomerEmail")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
@@ -266,10 +267,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.OrderDetail", b =>
                 {
-                    b.Property<string>("OrderId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProductId")
+                    b.Property<string>("OrderDetailId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal>("DiscountAmount")
@@ -278,8 +276,12 @@ namespace Infrastructure.Migrations
                     b.Property<string>("DiscountId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("OrderDetailId")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
@@ -290,11 +292,19 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.HasKey("OrderId", "ProductId");
+                    b.Property<string>("VariationId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("OrderDetailId");
 
                     b.HasIndex("DiscountId");
 
+                    b.HasIndex("OrderId");
+
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("VariationId");
 
                     b.ToTable("OrderDetails");
                 });
@@ -373,7 +383,7 @@ namespace Infrastructure.Migrations
                     b.Property<string>("CategoryId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateOnly>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("date");
 
                     b.Property<bool>("IsActive")
@@ -390,13 +400,7 @@ namespace Infrastructure.Migrations
                         .IsUnicode(true)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<decimal>("ProductPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateOnly>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("date");
 
                     b.HasKey("ProductId");
@@ -415,8 +419,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -698,15 +702,19 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Product", "Product")
+                    b.HasOne("Domain.Entities.Product", null)
                         .WithMany("OrderDetails")
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("ProductId");
+
+                    b.HasOne("Domain.Entities.ProductVariation", "Variation")
+                        .WithMany()
+                        .HasForeignKey("VariationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
 
-                    b.Navigation("Product");
+                    b.Navigation("Variation");
                 });
 
             modelBuilder.Entity("Domain.Entities.Payment", b =>

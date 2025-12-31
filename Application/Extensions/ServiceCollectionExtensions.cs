@@ -25,6 +25,8 @@ namespace Application.Extensions
             services.AddScoped<IProductVariationService, ProductVariationService>();
 
             services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
+            
+            services.AddScoped<IOrderService, OrderService>();
 
             services.AddScoped<IProductImageService, ProductImageService>();
 

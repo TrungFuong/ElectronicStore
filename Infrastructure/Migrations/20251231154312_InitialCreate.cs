@@ -111,11 +111,9 @@ namespace Infrastructure.Migrations
                 {
                     ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProductName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    StockQuantity = table.Column<int>(type: "int", nullable: false),
                     ProductDescription = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    ProductPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CreatedAt = table.Column<DateOnly>(type: "date", nullable: false),
-                    UpdatedAt = table.Column<DateOnly>(type: "date", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "date", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "date", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CategoryId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     BrandId = table.Column<string>(type: "nvarchar(450)", nullable: true)
@@ -166,7 +164,7 @@ namespace Infrastructure.Migrations
                 {
                     ImageId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
                     IsMain = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -229,7 +227,7 @@ namespace Infrastructure.Migrations
                 {
                     CustomerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     CustomerName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CustomerEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CustomerEmail = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CustomerPhone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CustomerAddress = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     CustomerDOB = table.Column<DateOnly>(type: "date", nullable: false),
@@ -359,18 +357,19 @@ namespace Infrastructure.Migrations
                 name: "OrderDetails",
                 columns: table => new
                 {
-                    OrderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    OrderDetailId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderDetailId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    DiscountId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    OrderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    VariationId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DiscountId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ProductId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrderDetails", x => new { x.OrderId, x.ProductId });
+                    table.PrimaryKey("PK_OrderDetails", x => x.OrderDetailId);
                     table.ForeignKey(
                         name: "FK_OrderDetails_Discounts_DiscountId",
                         column: x => x.DiscountId,
@@ -383,11 +382,16 @@ namespace Infrastructure.Migrations
                         principalColumn: "OrderId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
+                        name: "FK_OrderDetails_ProductVariations_VariationId",
+                        column: x => x.VariationId,
+                        principalTable: "ProductVariations",
+                        principalColumn: "VariationId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_OrderDetails_Products_ProductId",
                         column: x => x.ProductId,
                         principalTable: "Products",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "ProductId");
                 });
 
             migrationBuilder.CreateTable(
@@ -464,9 +468,19 @@ namespace Infrastructure.Migrations
                 column: "DiscountId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_OrderId",
+                table: "OrderDetails",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrderDetails_ProductId",
                 table: "OrderDetails",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderDetails_VariationId",
+                table: "OrderDetails",
+                column: "VariationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_CustomerId",

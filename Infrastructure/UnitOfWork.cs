@@ -38,6 +38,10 @@ namespace Infrastructure
         private IGenericsRepository<ProductImage>? _productImageRepository;
         private IGenericsRepository<VariationAttribute>? _variationAttributeRepository;
         private IGenericsRepository<VariationOption>? _variationOptionRepository;
+
+        // orders
+        private IOrderRepository _orderRepository;
+
         public UnitOfWork(DBContext context)
         {
             _context = context;
@@ -93,6 +97,10 @@ namespace Infrastructure
         public IGenericsRepository<VariationOption> VariationOptionRepository
         => _variationOptionRepository
            ??= new GenericRepository<VariationOption>(_context);
+
+        public IOrderRepository OrderRepository
+        => _orderRepository ??= new OrderRepository(_context);
+
         public int Commit()
         {
             return _context.SaveChanges();

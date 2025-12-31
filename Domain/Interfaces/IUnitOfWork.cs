@@ -27,6 +27,10 @@ namespace Domain.Interfaces
         IGenericsRepository<VariationAttribute> VariationAttributeRepository { get; }
 
         IGenericsRepository<VariationOption> VariationOptionRepository { get; }
+
+        // Orders
+        IOrderRepository OrderRepository { get; }
+
         Task<int> CommitAsync();
         int Commit();
     }
