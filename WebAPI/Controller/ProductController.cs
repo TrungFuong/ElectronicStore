@@ -1,11 +1,9 @@
 ﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
-using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-
 
 namespace API.Controllers
 {
@@ -26,11 +24,10 @@ namespace API.Controllers
         {
             var result = await _productService.CreateProductAsync(request);
 
-            return Ok(new GeneralGetResponse
+            return Ok(new GeneralBoolResponse
             {
-                Success = true,
-                Message = "Create product successfully",
-                Data = result
+                Success = ok,
+                Message = "Create product successfully"
             });
         }
 

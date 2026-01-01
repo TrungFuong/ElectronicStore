@@ -1,6 +1,5 @@
 ﻿using Application.DTOs.Requests;
 using Application.Interfaces;
-using Domain.Entities;
 using Application.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

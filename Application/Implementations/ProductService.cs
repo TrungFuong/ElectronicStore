@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Constants;
@@ -168,9 +168,6 @@ namespace Application.Services
 
             });
             return true;
-
-
-
         }
 
         // ========================= READ =========================

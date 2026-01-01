@@ -30,6 +30,11 @@ namespace Infrastructure
         //private ICustomerRepository _customer_repository;
         //private IProductRepository _product_repository;
         private IRefreshTokenRepository _refreshTokenRepository;
+        private IProductRepository _productRepository;
+
+        // new repositories
+        private IDiscountRepository _discountRepository;
+        private IOrderRepository _orderRepository;
         private IStaffRepository _staffRepository;
         private IProductRepository _productRepository;
 
@@ -65,23 +70,6 @@ namespace Infrastructure
         public IStaffRepository StaffRepository
             => _staffRepository ??= new StaffRepository(_context);
 
-        public async Task ExecuteInTransactionAsync(Func<Task> action)
-        {
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
-            try
-            {
-                await action();
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
-        }
-
         public IProductRepository ProductRepository
         => _productRepository ??= new ProductRepository(_context);
 
@@ -110,6 +98,24 @@ namespace Infrastructure
 
         public ICustomerRepository CustomerRepository
             => _customerRepository ??= new CustomerRepository(_context);
+
+        
+        public async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                await action();
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
         public int Commit()
         {

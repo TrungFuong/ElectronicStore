@@ -66,12 +66,10 @@ namespace Application.Implementations
             });
         }
 
-        //UPDATE
+        // UPDATE
         public async Task<bool> UpdateAsync(UpdateBrandRequest request)
         {
-            var brand = await _unitOfWork.BrandRepository
-                .GetAsync(b => b.BrandId == request.BrandId);
-
+            var brand = await _unitOfWork.BrandRepository.GetAsync(b => b.BrandId == request.BrandId);
             if (brand == null) return false;
 
             brand.BrandName = request.BrandName;
