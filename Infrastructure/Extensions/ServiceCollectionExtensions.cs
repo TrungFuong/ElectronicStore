@@ -20,6 +20,10 @@ namespace Infrastructure.Extensions
             services.AddDbContext<DBContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
+            //Product Repository
+            services.AddScoped<IProductRepository, ProductRepository>();
+
+
             // Register Repositories
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -32,6 +36,17 @@ namespace Infrastructure.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IAdminAccountService, AdminAccountService>();
+
+            // Brand Repository
+            services.AddScoped<IBrandRepository, BrandRepository>();
+
+            // Category
+            services.AddScoped<ICategoryService, CategoryService>();
+
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+            
+            services.AddScoped<IProductRepository, ProductRepository>();
 
             return services;
         }

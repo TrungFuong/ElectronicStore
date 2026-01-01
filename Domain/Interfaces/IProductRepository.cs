@@ -9,5 +9,8 @@ namespace Domain.Interfaces
 {
     public interface IProductRepository : IGenericsRepository<Product>
     {
+        //dùng cho product 
+        Task<Product?> GetByIdAsync(string productId);
+        Task<IEnumerable<Product>> GetAllWithIncludesAsync();
     }
 }

@@ -9,11 +9,17 @@ namespace Domain.Interfaces
     public interface IUnitOfWork
     {
         IAccountRepository AccountRepository { get; }
-        //IBrandRepository Brands { get; }
-        //ICategoryRepository Categories { get; }
+        IBrandRepository BrandRepository { get; }
+
+        ICategoryRepository CategoryRepository { get; }
         //ICustomerRepository Customers { get; }
-        //IProductRepository Products { get; }
+        IProductRepository ProductRepository { get; }
         IRefreshTokenRepository RefreshTokenRepository { get; }
+
+        // Added repositories
+        IDiscountRepository DiscountRepository { get; }
+        IOrderRepository OrderRepository { get; }
+
         IStaffRepository StaffRepository { get; }
         Task ExecuteInTransactionAsync(Func<Task> action);
         Task<int> CommitAsync();
