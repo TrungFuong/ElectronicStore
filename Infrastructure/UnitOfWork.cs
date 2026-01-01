@@ -26,9 +26,9 @@ namespace Infrastructure
         private readonly DBContext _context;
         private IAccountRepository _accountRepository;
         private IBrandRepository _brandRepository;
-        private ICategoryRepository _categoryRepository;
-        //private ICustomerRepository _customerRepository;
-        //private IProductRepository _productRepository;
+        private ICategoryRepository _category_repository;
+        //private ICustomerRepository _customer_repository;
+        //private IProductRepository _product_repository;
         private IRefreshTokenRepository _refreshTokenRepository;
         private IStaffRepository _staffRepository;
         private IProductRepository _productRepository;
@@ -36,14 +36,15 @@ namespace Infrastructure
         private IGenericsRepository<ProductVariation>? _productVariationRepository;
         private IGenericsRepository<ProductSpecification>? _productSpecificationRepository;
         private IGenericsRepository<ProductImage>? _productImageRepository;
-        private IGenericsRepository<VariationAttribute>? _variationAttributeRepository;
-        private IGenericsRepository<VariationOption>? _variationOptionRepository;
+        private IGenericsRepository<VariationAttribute>? _variationAttribute_repository;
+        private IGenericsRepository<VariationOption>? _variation_option_repository;
 
         // orders
         private IOrderRepository _orderRepository;
 
         // new repositories
         private IDiscountRepository _discountRepository;
+        private ICustomerRepository _customerRepository;
 
         public UnitOfWork(DBContext context)
         {
@@ -59,7 +60,7 @@ namespace Infrastructure
         => _brandRepository ??= new BrandRepository(_context);
 
         public ICategoryRepository CategoryRepository
-        => _categoryRepository ??= new CategoryRepository(_context);
+        => _category_repository ??= new CategoryRepository(_context);
 
         public IStaffRepository StaffRepository
             => _staffRepository ??= new StaffRepository(_context);
@@ -95,10 +96,10 @@ namespace Infrastructure
         => _productImageRepository
            ??= new GenericRepository<ProductImage>(_context);
         public IGenericsRepository<VariationAttribute> VariationAttributeRepository 
-        => _variationAttributeRepository
+        => _variationAttribute_repository
            ??= new GenericRepository<VariationAttribute>(_context);
         public IGenericsRepository<VariationOption> VariationOptionRepository
-        => _variationOptionRepository
+        => _variation_option_repository
            ??= new GenericRepository<VariationOption>(_context);
 
         public IOrderRepository OrderRepository
@@ -107,7 +108,8 @@ namespace Infrastructure
         public IDiscountRepository DiscountRepository
             => _discountRepository ??= new DiscountRepository(_context);
 
-        
+        public ICustomerRepository CustomerRepository
+            => _customerRepository ??= new CustomerRepository(_context);
 
         public int Commit()
         {

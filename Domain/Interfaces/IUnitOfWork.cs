@@ -20,6 +20,7 @@ namespace Domain.Interfaces
         // Added repositories
         IDiscountRepository DiscountRepository { get; }
         IOrderRepository OrderRepository { get; }
+        ICustomerRepository CustomerRepository { get; }
 
         IStaffRepository StaffRepository { get; }
         Task ExecuteInTransactionAsync(Func<Task> action);

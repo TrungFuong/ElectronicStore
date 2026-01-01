@@ -1,6 +1,7 @@
+using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Models.Requests;
-using Application.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,18 @@ namespace API.Controllers
         public OrderController(IOrderService orderService)
         {
             _orderService = orderService;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateOrderRequest request)
+        {
+            var orderId = await _orderService.CreateOrderAsync(request);
+
+            return Ok(new
+            {
+                OrderId = orderId,
+                Message = "Order created successfully"
+            });
         }
 
         [HttpPost("confirm")]
