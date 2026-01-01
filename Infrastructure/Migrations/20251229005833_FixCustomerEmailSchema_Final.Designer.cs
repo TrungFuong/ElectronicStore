@@ -4,6 +4,7 @@ using Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20251229005833_FixCustomerEmailSchema_Final")]
+    partial class FixCustomerEmailSchema_Final
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,68 +80,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("BrandId");
 
                     b.ToTable("Brands");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Cart", b =>
-                {
-                    b.Property<string>("CartId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AccountId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("AccountId1")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("CartId");
-
-                    b.HasIndex("AccountId")
-                        .IsUnique();
-
-                    b.HasIndex("AccountId1")
-                        .IsUnique()
-                        .HasFilter("[AccountId1] IS NOT NULL");
-
-                    b.ToTable("Carts");
-                });
-
-            modelBuilder.Entity("Domain.Entities.CartItem", b =>
-                {
-                    b.Property<string>("CartItemId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("CartId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("VariationId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("CartItemId");
-
-                    b.HasIndex("VariationId");
-
-                    b.HasIndex("CartId", "VariationId")
-                        .IsUnique();
-
-                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("Domain.Entities.Category", b =>
@@ -478,8 +419,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("nvarchar(1024)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -701,40 +642,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Staff");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Cart", b =>
-                {
-                    b.HasOne("Domain.Entities.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Account", null)
-                        .WithOne("Cart")
-                        .HasForeignKey("Domain.Entities.Cart", "AccountId1");
-
-                    b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("Domain.Entities.CartItem", b =>
-                {
-                    b.HasOne("Domain.Entities.Cart", "Cart")
-                        .WithMany("Items")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.ProductVariation", "Variation")
-                        .WithMany()
-                        .HasForeignKey("VariationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-
-                    b.Navigation("Variation");
-                });
-
             modelBuilder.Entity("Domain.Entities.Customer", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
@@ -911,8 +818,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
                 {
-                    b.Navigation("Cart");
-
                     b.Navigation("Customer");
 
                     b.Navigation("RefreshTokens");
@@ -921,11 +826,6 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Brand", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Cart", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Domain.Entities.Category", b =>

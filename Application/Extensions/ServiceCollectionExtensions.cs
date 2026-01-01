@@ -30,6 +30,8 @@ namespace Application.Extensions
 
             services.AddScoped<IAttributeService, AttributeService>();
 
+            services.AddScoped<ICartService, CartService>();
+
             return services;
         }
     }

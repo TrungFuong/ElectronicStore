@@ -9,7 +9,7 @@ namespace Infrastructure.DataAccess
     {
         public DBContext(DbContextOptions<DBContext> options) : base(options) { }
 
-        public DBContext() { }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -41,7 +41,8 @@ namespace Infrastructure.DataAccess
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<Staff> Staffs { get; set; } = null!;
-
+        public DbSet<Cart> Carts { get; set; } = null!;
+        public DbSet<CartItem> CartItems { get; set; } = null!;
         public DbSet<ProductVariation> ProductVariations { get; set; } = null!;
         public DbSet<VariationAttribute> VariationAttributes { get; set; } = null!;
         public DbSet<VariationOption> VariationOptions { get; set; } = null!;
@@ -199,6 +200,33 @@ namespace Infrastructure.DataAccess
                 .WithMany()
                 .HasForeignKey(o => o.AttributeId)
                 .OnDelete(DeleteBehavior.Restrict);
+            // Cart
+            modelBuilder.Entity<Cart>()
+                .HasIndex(c => c.AccountId)
+                .IsUnique(); // 1 account chỉ có 1 cart
+
+            modelBuilder.Entity<Cart>()
+                .HasOne(c => c.Account)
+                .WithMany() // Account hiện chưa có navigation carts
+                .HasForeignKey(c => c.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // CartItem
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Cart)
+                .WithMany(c => c.Items)
+                .HasForeignKey(ci => ci.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Variation)
+                .WithMany() // ProductVariation hiện chưa có navigation cart items
+                .HasForeignKey(ci => ci.VariationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CartItem>()
+                .HasIndex(ci => new { ci.CartId, ci.VariationId })
+                .IsUnique(); // mỗi variation chỉ 1 dòng trong cart
 
             // Product - Image
             modelBuilder.Entity<Product>()

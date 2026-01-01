@@ -33,7 +33,9 @@ namespace Infrastructure
         private IStaffRepository _staffRepository;
         private IProductRepository _productRepository;
 
-        private IGenericsRepository<ProductVariation>? _productVariationRepository;
+        private IProductVariationRepository? _productVariationRepository;
+        private ICartRepository? _cartRepository;
+        private ICartItemRepository? _cartItemRepository;
         private IGenericsRepository<ProductSpecification>? _productSpecificationRepository;
         private IGenericsRepository<ProductImage>? _productImageRepository;
         private IGenericsRepository<VariationAttribute>? _variationAttributeRepository;
@@ -77,9 +79,13 @@ namespace Infrastructure
         public IProductRepository ProductRepository
         => _productRepository ??= new ProductRepository(_context);
 
-        public IGenericsRepository<ProductVariation> ProductVariationRepository
-        => _productVariationRepository
-           ??= new GenericRepository<ProductVariation>(_context);
+        public IProductVariationRepository ProductVariationRepository
+            => _productVariationRepository ??= new ProductVariationRepository(_context);
+        public ICartRepository CartRepository
+    => _cartRepository ??= new CartRepository(_context);
+
+        public ICartItemRepository CartItemRepository
+            => _cartItemRepository ??= new CartItemRepository(_context);
 
         public IGenericsRepository<ProductSpecification> ProductSpecificationRepository
         => _productSpecificationRepository

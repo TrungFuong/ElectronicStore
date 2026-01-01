@@ -20,7 +20,7 @@ namespace Domain.Entities
         [Column(TypeName = "decimal(18,2)")]
 
         public DateOnly CreatedAt { get; set; } = DateOnly.FromDateTime(DateTime.Now);
-        public DateOnly UpdatedAt { get; set; }
+        public DateOnly? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
         public string? CategoryId { get; set; }
         public Category? Category { get; set; }
