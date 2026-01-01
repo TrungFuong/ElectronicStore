@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Application.DTOs.Auth;
 using System.Threading.Tasks;
-using Domain.Models.Responses;
-using Domain.Models.Requests;
 using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 
 namespace Application.Interfaces
 {

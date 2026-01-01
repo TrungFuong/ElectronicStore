@@ -34,6 +34,7 @@ namespace Infrastructure
         // new repositories
         private IDiscountRepository _discountRepository;
         private IOrderRepository _orderRepository;
+        private IStaffRepository _staffRepository;
 
         public UnitOfWork(DBContext context)
         {
@@ -59,6 +60,26 @@ namespace Infrastructure
 
         public IOrderRepository OrderRepository
             => _orderRepository ??= new OrderRepository(_context);
+
+        public IStaffRepository StaffRepository
+            => _staffRepository ??= new StaffRepository(_context);
+
+        public async Task ExecuteInTransactionAsync(Func<Task> action)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                await action();
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
         public int Commit()
         {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Auth
+namespace Application.DTOs.Requests
 {
     public class RefreshTokenRequest
     {

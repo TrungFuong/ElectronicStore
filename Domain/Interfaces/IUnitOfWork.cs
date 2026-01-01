@@ -20,6 +20,8 @@ namespace Domain.Interfaces
         IDiscountRepository DiscountRepository { get; }
         IOrderRepository OrderRepository { get; }
 
+        IStaffRepository StaffRepository { get; }
+        Task ExecuteInTransactionAsync(Func<Task> action);
         Task<int> CommitAsync();
         int Commit();
     }

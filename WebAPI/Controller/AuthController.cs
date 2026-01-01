@@ -1,9 +1,6 @@
-﻿using Application.DTOs.Auth;
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Application.Interfaces;
-using Domain.Entities;
-using Domain.Models;
-using Domain.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -100,6 +97,7 @@ namespace API.Controllers
         }
 
         [HttpPost("logout")]
+        [Authorize]
         public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest logoutRequest)
         {
             try
@@ -133,9 +131,10 @@ namespace API.Controllers
             if (string.IsNullOrEmpty(accountId))
             {
                 return Unauthorized(
-                    new GeneralGetResponse { 
-                        Success = false, 
-                        Message = "Không xác định được người dùng." 
+                    new GeneralGetResponse
+                    {
+                        Success = false,
+                        Message = "Không xác định được người dùng."
                     });
             }
             // Gán accountId vào request
@@ -147,22 +146,26 @@ namespace API.Controllers
                 if (ok)
                 {
                     return Ok(
-                        new GeneralGetResponse { 
-                            Success = true, 
-                            Message = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại" 
+                        new GeneralGetResponse
+                        {
+                            Success = true,
+                            Message = "Đổi mật khẩu thành công. Vui lòng đăng nhập lại"
                         });
                 }
                 return BadRequest(
-                    new GeneralGetResponse { 
-                        Success = false, 
-                        Message = "Đổi mật khẩu không thành công" });
+                    new GeneralGetResponse
+                    {
+                        Success = false,
+                        Message = "Đổi mật khẩu không thành công"
+                    });
             }
             catch (Exception ex)
             {
                 return BadRequest(
-                    new GeneralGetResponse { 
-                        Success = false, 
-                        Message = ex.Message 
+                    new GeneralGetResponse
+                    {
+                        Success = false,
+                        Message = ex.Message
                     });
             }
         }

@@ -11,6 +11,8 @@ namespace Domain.Entities
         [Unicode]
         [MaxLength(50)]
         public string CustomerName { get; set; }
+        [Required]
+        [MaxLength(100)]
         public string CustomerEmail { get; set; }
         [Required]
         [MaxLength(20)]

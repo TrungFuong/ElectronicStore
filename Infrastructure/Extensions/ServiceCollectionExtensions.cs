@@ -27,6 +27,7 @@ namespace Infrastructure.Extensions
             // Register Repositories
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IStaffRepository, StaffRepository>();
 
             // Register UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -34,6 +35,7 @@ namespace Infrastructure.Extensions
             // Register security utilities
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<IAdminAccountService, AdminAccountService>();
 
             // Brand Repository
             services.AddScoped<IBrandRepository, BrandRepository>();
