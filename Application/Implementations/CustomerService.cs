@@ -87,7 +87,7 @@ namespace Application.Implementations
         {
             var customer = await _unitOfWork.CustomerRepository.GetAsync(c => c.CustomerId == customerId);
             if (customer == null) return false;
-            _unitOfWork.CustomerRepository.Delete(customer);
+            _unitOfWork.CustomerRepository.SoftDelete(customer);
             await _unitOfWork.CommitAsync();
             return true;
         }

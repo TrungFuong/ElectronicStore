@@ -29,12 +29,7 @@ namespace Application.Implementations
             decimal subtotal = request.Items.Sum(i => i.UnitPrice * i.Quantity);
             decimal discountAmount = 0m;
 
-            if (!string.IsNullOrWhiteSpace(request.DiscountId))
-            {
-                var discount = await _unitOfWork.ProductRepository.GetAsync(d => d.ProductId == request.DiscountId);
-                // discount table handling omitted for brevity (not central here)
-            }
-
+            // discount logic omitted intentionally; leave hooks here to query discount repository later
             var orderId = Prefixes.ORDER_ID_PREFIX + string.Format(Prefixes.ID_FORMAT, await _unitOfWork.OrderRepository.CountAsync() + 1);
 
             var order = new Order
@@ -66,15 +61,23 @@ namespace Application.Implementations
                 order.OrderDetails.Add(od);
             }
 
-            await _unitOfWork.OrderRepository.AddAsync(order);
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                await _unitOfWork.OrderRepository.AddAsync(order);
+            });
 
             return orderId;
         }
 
         public async Task<IEnumerable<OrderResponse>> GetAllAsync()
         {
-            var orders = await _unitOfWork.OrderRepository.GetAllAsync();
+            var orders = await _unitOfWork.OrderRepository.GetAllAsync(
+                null,
+                o => o.OrderDetails,
+                o => o.Payments,
+                o => o.DiscountUsages
+            );
+
             return orders.Select(o => new OrderResponse
             {
                 OrderId = o.OrderId,
@@ -133,35 +136,40 @@ namespace Application.Implementations
             if (order.OrderStatus == EnumOrderStatus.Delivered || order.OrderStatus == EnumOrderStatus.Cancelled)
                 throw new InvalidOperationException("Cannot update delivered or cancelled order.");
 
-            order.ShippingAddress = request.ShippingAddress;
-            order.Note = request.Note ?? order.Note;
-            order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
-
-            if (request.Items != null && request.Items.Any())
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                order.OrderDetails.Clear();
-                decimal subtotal = 0m;
-                foreach (var item in request.Items)
-                {
-                    var od = new OrderDetail
-                    {
-                        OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid().ToString(),
-                        OrderId = order.OrderId,
-                        VariationId = item.VariationId,
-                        UnitPrice = item.UnitPrice,
-                        Quantity = item.Quantity,
-                        DiscountAmount = 0m,
-                        Total = item.UnitPrice * item.Quantity
-                    };
-                    order.OrderDetails.Add(od);
-                    subtotal += od.Total;
-                }
-                order.SubTotal = subtotal;
-                order.Total = subtotal - order.DiscountAmount;
-            }
+                order.ShippingAddress = request.ShippingAddress;
+                order.Note = request.Note ?? order.Note;
+                order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
 
-            _unitOfWork.OrderRepository.Update(order);
-            await _unitOfWork.CommitAsync();
+                if (request.Items != null && request.Items.Any())
+                {
+                    // remove current details and add new ones
+                    // since OrderDetails are owned by Order, replace collection
+                    order.OrderDetails.Clear();
+                    decimal subtotal = 0m;
+                    foreach (var item in request.Items)
+                    {
+                        var od = new OrderDetail
+                        {
+                            OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid().ToString(),
+                            OrderId = order.OrderId,
+                            VariationId = item.VariationId,
+                            UnitPrice = item.UnitPrice,
+                            Quantity = item.Quantity,
+                            DiscountAmount = 0m,
+                            Total = item.UnitPrice * item.Quantity
+                        };
+                        order.OrderDetails.Add(od);
+                        subtotal += od.Total;
+                    }
+                    order.SubTotal = subtotal;
+                    order.Total = subtotal - order.DiscountAmount;
+                }
+
+                _unitOfWork.OrderRepository.Update(order);
+            });
+
             return true;
         }
 
@@ -170,8 +178,11 @@ namespace Application.Implementations
             var order = await _unitOfWork.OrderRepository.GetAsync(o => o.OrderId == orderId);
             if (order == null) return false;
 
-            _unitOfWork.OrderRepository.Delete(order);
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                _unitOfWork.OrderRepository.Delete(order);
+            });
+
             return true;
         }
 
@@ -182,32 +193,37 @@ namespace Application.Implementations
             if (order == null) throw new InvalidOperationException("Order not found");
             if (order.OrderStatus != EnumOrderStatus.Pending) throw new InvalidOperationException("Only pending orders can be confirmed");
 
-            // check and deduct stock from variations
-            foreach (var od in order.OrderDetails)
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                var variation = await _unitOfWork.ProductVariationRepository.GetAsync(v => v.VariationId == od.VariationId);
-                if (variation == null) throw new InvalidOperationException($"Variation not found: {od.VariationId}");
-                if (variation.StockQuantity < od.Quantity) throw new InvalidOperationException($"Insufficient stock for variation {variation.VariationId}");
-                variation.StockQuantity -= od.Quantity;
-                _unitOfWork.ProductVariationRepository.Update(variation);
-            }
+                // check and deduct stock from variations
+                foreach (var od in order.OrderDetails)
+                {
+                    var variation = await _unitOfWork.ProductVariationRepository.GetAsync(v => v.VariationId == od.VariationId);
+                    if (variation == null) throw new InvalidOperationException($"Variation not found: {od.VariationId}");
+                    if (variation.StockQuantity < od.Quantity) throw new InvalidOperationException($"Insufficient stock for variation {variation.VariationId}");
+                    variation.StockQuantity -= od.Quantity;
+                    _unitOfWork.ProductVariationRepository.Update(variation);
+                }
 
-            order.OrderStatus = EnumOrderStatus.Shipped;
-            order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
-            _unitOfWork.OrderRepository.Update(order);
-            await _unitOfWork.CommitAsync();
+                order.OrderStatus = EnumOrderStatus.Shipped;
+                order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+                _unitOfWork.OrderRepository.Update(order);
+            });
         }
 
         public async Task ShipOrderAsync(string orderId)
         {
             if (string.IsNullOrWhiteSpace(orderId)) throw new ArgumentException(nameof(orderId));
-            var order = await _unitOfWork.OrderRepository.GetAsync(o => o.OrderId == orderId);
-            if (order == null) throw new InvalidOperationException("Order not found");
-            if (order.OrderStatus != EnumOrderStatus.Shipped) throw new InvalidOperationException("Order must be in shipped state to mark delivered");
-            order.OrderStatus = EnumOrderStatus.Delivered;
-            order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
-            _unitOfWork.OrderRepository.Update(order);
-            await _unitOfWork.CommitAsync();
+
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                var order = await _unitOfWork.OrderRepository.GetAsync(o => o.OrderId == orderId);
+                if (order == null) throw new InvalidOperationException("Order not found");
+                if (order.OrderStatus != EnumOrderStatus.Shipped) throw new InvalidOperationException("Order must be in shipped state to mark delivered");
+                order.OrderStatus = EnumOrderStatus.Delivered;
+                order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+                _unitOfWork.OrderRepository.Update(order);
+            });
         }
 
         public async Task CancelOrderAsync(string orderId)
@@ -217,24 +233,26 @@ namespace Application.Implementations
             if (order == null) throw new InvalidOperationException("Order not found");
             if (order.OrderStatus == EnumOrderStatus.Delivered) throw new InvalidOperationException("Cannot cancel delivered order");
 
-            // restore stock if it was already deducted
-            if (order.OrderStatus == EnumOrderStatus.Shipped || order.OrderStatus == EnumOrderStatus.Pending)
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                foreach (var od in order.OrderDetails)
+                // restore stock if it was already deducted
+                if (order.OrderStatus == EnumOrderStatus.Shipped || order.OrderStatus == EnumOrderStatus.Pending)
                 {
-                    var variation = await _unitOfWork.ProductVariationRepository.GetAsync(v => v.VariationId == od.VariationId);
-                    if (variation != null)
+                    foreach (var od in order.OrderDetails)
                     {
-                        variation.StockQuantity += od.Quantity;
-                        _unitOfWork.ProductVariationRepository.Update(variation);
+                        var variation = await _unitOfWork.ProductVariationRepository.GetAsync(v => v.VariationId == od.VariationId);
+                        if (variation != null)
+                        {
+                            variation.StockQuantity += od.Quantity;
+                            _unitOfWork.ProductVariationRepository.Update(variation);
+                        }
                     }
                 }
-            }
 
-            order.OrderStatus = EnumOrderStatus.Cancelled;
-            order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
-            _unitOfWork.OrderRepository.Update(order);
-            await _unitOfWork.CommitAsync();
+                order.OrderStatus = EnumOrderStatus.Cancelled;
+                order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+                _unitOfWork.OrderRepository.Update(order);
+            });
         }
     }
 }

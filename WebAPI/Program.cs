@@ -1,4 +1,6 @@
 ﻿using Application.Extensions;
+using Application.Implementations;
+using Application.Interfaces;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -50,6 +52,8 @@ builder.Services.AddEndpointsApiExplorer();
 // DI from Application + Infrastructure
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
+
+
 
 var app = builder.Build();
 

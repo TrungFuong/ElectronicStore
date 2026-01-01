@@ -2,8 +2,6 @@
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
-using Domain.Models;
-using Domain.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

@@ -32,6 +32,8 @@ namespace Application.Extensions
 
             services.AddScoped<IAttributeService, AttributeService>();
 
+            services.AddScoped<IDiscountService, DiscountService>();
+
             // Customer
             services.AddScoped<ICustomerService, CustomerService>();
 
