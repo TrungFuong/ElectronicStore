@@ -134,6 +134,10 @@ namespace Infrastructure.Repositories
         {
             await _context.Set<T>().AddAsync(entity);
         }
+        public async Task<T?> GetByIdAsync(string id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
 
         public async Task AddRangeAsync(IEnumerable<T> entities)
         {

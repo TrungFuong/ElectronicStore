@@ -37,6 +37,8 @@ namespace Application.Extensions
             // Customer
             services.AddScoped<ICustomerService, CustomerService>();
 
+            services.AddScoped<ICartService, CartService>();
+
             return services;
         }
     }

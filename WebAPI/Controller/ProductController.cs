@@ -26,7 +26,7 @@ namespace API.Controllers
 
             return Ok(new GeneralBoolResponse
             {
-                Success = ok,
+                Success = true,
                 Message = "Create product successfully"
             });
         }

@@ -25,13 +25,13 @@ namespace Domain.Interfaces
         IStaffRepository StaffRepository { get; }
         Task ExecuteInTransactionAsync(Func<Task> action);
         IGenericsRepository<ProductVariation> ProductVariationRepository { get; }
-
         IGenericsRepository<ProductSpecification> ProductSpecificationRepository { get; }
 
         IGenericsRepository<ProductImage> ProductImageRepository { get; }
 
         IGenericsRepository<VariationAttribute> VariationAttributeRepository { get; }
-
+        ICartRepository CartRepository { get; }
+        ICartItemRepository CartItemRepository { get; }
         IGenericsRepository<VariationOption> VariationOptionRepository { get; }
 
         // Orders

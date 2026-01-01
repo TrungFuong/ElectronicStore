@@ -16,6 +16,7 @@ namespace Domain.Interfaces
         Task<(IEnumerable<T> items, int totalCount)> GetAllAsync(int page = 1, Expression<Func<T, bool>> filter = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, string includeProperties = "", Expression<Func<T, bool>>? prioritizeCondition = null, int pageSize = 10);
 
         Task<T> GetAsync(Expression<Func<T, bool>> expression);
+        Task<T?> GetByIdAsync(string id);
 
         Task<T> GetAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includeProperties);
 

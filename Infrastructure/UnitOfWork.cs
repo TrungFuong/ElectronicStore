@@ -36,19 +36,18 @@ namespace Infrastructure
         private IDiscountRepository _discountRepository;
         private IOrderRepository _orderRepository;
         private IStaffRepository _staffRepository;
-        private IProductRepository _productRepository;
 
-        private IGenericsRepository<ProductVariation>? _productVariationRepository;
+        private ICartRepository? _cartRepository;
+        private ICartItemRepository? _cartItemRepository;
         private IGenericsRepository<ProductSpecification>? _productSpecificationRepository;
         private IGenericsRepository<ProductImage>? _productImageRepository;
         private IGenericsRepository<VariationAttribute>? _variationAttribute_repository;
         private IGenericsRepository<VariationOption>? _variation_option_repository;
+        private IGenericsRepository<ProductVariation>? _productVariationRepository;
 
         // orders
-        private IOrderRepository _orderRepository;
 
         // new repositories
-        private IDiscountRepository _discountRepository;
         private ICustomerRepository _customerRepository;
 
         public UnitOfWork(DBContext context)
@@ -117,6 +116,14 @@ namespace Infrastructure
             }
         }
 
+        
+        public ICartRepository CartRepository
+    => _cartRepository ??= new CartRepository(_context);
+
+        public ICartItemRepository CartItemRepository
+            => _cartItemRepository ??= new CartItemRepository(_context);
+
+        
         public int Commit()
         {
             return _context.SaveChanges();

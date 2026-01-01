@@ -22,6 +22,7 @@ namespace Domain.Entities
         public Customer? Customer { get; set; }
         public string? StaffId { get; set; }
         public Staff? Staff { get; set; }
+        public Cart? Cart { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }
