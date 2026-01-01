@@ -21,6 +21,22 @@ namespace Application.Implementations
             _unitOfWork = unitOfWork;
         }
 
+        //PRIVATE: GENERATE ID 
+        private async Task<string> GenerateBrandIdAsync()
+        {
+            var lastBrand = (await _unitOfWork.BrandRepository.GetAllAsync())
+                .OrderByDescending(b => b.BrandId)
+                .FirstOrDefault();
+
+            if (lastBrand == null)
+                return Prefixes.BRAND_ID_PREFIX + "0001";
+
+            var numberPart = lastBrand.BrandId.Substring(Prefixes.BRAND_ID_PREFIX.Length);
+            var nextNumber = int.Parse(numberPart) + 1;
+
+            return Prefixes.BRAND_ID_PREFIX + nextNumber.ToString("D4");
+        }
+
         // CREATE
         public async Task CreateAsync(CreateBrandRequest request)
         {
@@ -28,7 +44,7 @@ namespace Application.Implementations
 
             var brand = new Brand
             {
-                BrandId = Prefixes.BRAND_ID_PREFIX +string.Format(Prefixes.ID_FORMAT, count + 1),
+                BrandId = await GenerateBrandIdAsync(),
                 BrandName = request.BrandName,
                 BrandDescription = request.BrandDescription
             };
@@ -37,7 +53,7 @@ namespace Application.Implementations
             await _unitOfWork.CommitAsync();
         }
 
-        // READ
+        //READ
         public async Task<IEnumerable<BrandResponse>> GetAllAsync()
         {
             var brands = await _unitOfWork.BrandRepository.GetAllAsync();
@@ -63,13 +79,16 @@ namespace Application.Implementations
             await _unitOfWork.CommitAsync();
             return true;
         }
+
         // DELETE
         public async Task<bool> DeleteAsync(DeleteBrandRequest request)
         {
-            var brand = await _unitOfWork.BrandRepository.GetAsync(b => b.BrandId == request.BrandId);
+            var brand = await _unitOfWork.BrandRepository
+                .GetAsync(b => b.BrandId == request.BrandId);
+
             if (brand == null) return false;
 
-            _unitOfWork.BrandRepository.SoftDelete(brand); // soft delete
+            _unitOfWork.BrandRepository.SoftDelete(brand);
             await _unitOfWork.CommitAsync();
             return true;
         }

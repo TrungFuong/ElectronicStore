@@ -22,10 +22,20 @@ namespace Application.Extensions
             // Category
             services.AddScoped<ICategoryService, CategoryService>();
 
-            // Discount, Order, Revenue
-            services.AddScoped<IDiscountService, DiscountService>();
+            services.AddScoped<IProductVariationService, ProductVariationService>();
+
+            services.AddScoped<IProductSpecificationService, ProductSpecificationService>();
+            
             services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IRevenueService, RevenueService>();
+
+            services.AddScoped<IProductImageService, ProductImageService>();
+
+            services.AddScoped<IAttributeService, AttributeService>();
+
+            services.AddScoped<IDiscountService, DiscountService>();
+
+            // Customer
+            services.AddScoped<ICustomerService, CustomerService>();
 
             return services;
         }

@@ -12,7 +12,7 @@ namespace Domain.Entities
         [Unicode]
         [MaxLength(100)]
         public string BrandName { get; set; }
-        [StringLength(200)]
+        [StringLength(500)]
         [Unicode]
         public string? BrandDescription { get; set; }
         public ICollection<Product> Products { get; set; } = new List<Product>();

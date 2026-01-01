@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,22 @@ namespace Domain.Interfaces
         // Added repositories
         IDiscountRepository DiscountRepository { get; }
         IOrderRepository OrderRepository { get; }
+        ICustomerRepository CustomerRepository { get; }
 
         IStaffRepository StaffRepository { get; }
         Task ExecuteInTransactionAsync(Func<Task> action);
+        IGenericsRepository<ProductVariation> ProductVariationRepository { get; }
+
+        IGenericsRepository<ProductSpecification> ProductSpecificationRepository { get; }
+
+        IGenericsRepository<ProductImage> ProductImageRepository { get; }
+
+        IGenericsRepository<VariationAttribute> VariationAttributeRepository { get; }
+
+        IGenericsRepository<VariationOption> VariationOptionRepository { get; }
+
+        // Orders
+
         Task<int> CommitAsync();
         int Commit();
     }

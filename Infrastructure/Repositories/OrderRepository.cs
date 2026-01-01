@@ -9,7 +9,6 @@ namespace Infrastructure.Repositories
     public class OrderRepository : GenericRepository<Order>, IOrderRepository
     {
         private readonly DBContext _context;
-
         public OrderRepository(DBContext context) : base(context)
         {
             _context = context;
@@ -19,6 +18,9 @@ namespace Infrastructure.Repositories
         {
             return await _context.Orders
                 .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Variation)
+                .Include(o => o.DiscountUsages)
+                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
     }

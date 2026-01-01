@@ -1,13 +1,18 @@
+using Application.DTOs.Requests;
+using Application.DTOs.Responses;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
     public interface IOrderService
     {
-        /// <summary>
-        /// Confirm an order (validate, deduct stock, mark as shipped/packaged).
-        /// </summary>
-        /// <param name="orderId">Order identifier.</param>
+        Task<string> CreateOrderAsync(CreateOrderRequest request);
+        Task<IEnumerable<OrderResponse>> GetAllAsync();
+        Task<OrderResponse?> GetByIdAsync(string orderId);
+        Task<bool> UpdateOrderAsync(UpdateOrderRequest request);
+        Task<bool> DeleteOrderAsync(string orderId);
+
         Task ConfirmOrderAsync(string orderId);
 
         /// <summary>

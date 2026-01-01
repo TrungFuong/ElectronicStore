@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using Domain.Entities;
+using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Infrastructure.Repositories;
 using System;
@@ -25,9 +26,9 @@ namespace Infrastructure
         private readonly DBContext _context;
         private IAccountRepository _accountRepository;
         private IBrandRepository _brandRepository;
-        private ICategoryRepository _categoryRepository;
-        //private ICustomerRepository _customerRepository;
-        //private IProductRepository _productRepository;
+        private ICategoryRepository _category_repository;
+        //private ICustomerRepository _customer_repository;
+        //private IProductRepository _product_repository;
         private IRefreshTokenRepository _refreshTokenRepository;
         private IProductRepository _productRepository;
 
@@ -35,6 +36,20 @@ namespace Infrastructure
         private IDiscountRepository _discountRepository;
         private IOrderRepository _orderRepository;
         private IStaffRepository _staffRepository;
+        private IProductRepository _productRepository;
+
+        private IGenericsRepository<ProductVariation>? _productVariationRepository;
+        private IGenericsRepository<ProductSpecification>? _productSpecificationRepository;
+        private IGenericsRepository<ProductImage>? _productImageRepository;
+        private IGenericsRepository<VariationAttribute>? _variationAttribute_repository;
+        private IGenericsRepository<VariationOption>? _variation_option_repository;
+
+        // orders
+        private IOrderRepository _orderRepository;
+
+        // new repositories
+        private IDiscountRepository _discountRepository;
+        private ICustomerRepository _customerRepository;
 
         public UnitOfWork(DBContext context)
         {
@@ -50,20 +65,41 @@ namespace Infrastructure
         => _brandRepository ??= new BrandRepository(_context);
 
         public ICategoryRepository CategoryRepository
-        => _categoryRepository ??= new CategoryRepository(_context);
-
-        public IProductRepository ProductRepository
-        => _productRepository ??= new ProductRepository(_context);
-
-        public IDiscountRepository DiscountRepository
-            => _discountRepository ??= new DiscountRepository(_context);
-
-        public IOrderRepository OrderRepository
-            => _orderRepository ??= new OrderRepository(_context);
+        => _category_repository ??= new CategoryRepository(_context);
 
         public IStaffRepository StaffRepository
             => _staffRepository ??= new StaffRepository(_context);
 
+        public IProductRepository ProductRepository
+        => _productRepository ??= new ProductRepository(_context);
+
+        public IGenericsRepository<ProductVariation> ProductVariationRepository
+        => _productVariationRepository
+           ??= new GenericRepository<ProductVariation>(_context);
+
+        public IGenericsRepository<ProductSpecification> ProductSpecificationRepository
+        => _productSpecificationRepository
+           ??= new GenericRepository<ProductSpecification>(_context);
+        public IGenericsRepository<ProductImage> ProductImageRepository
+        => _productImageRepository
+           ??= new GenericRepository<ProductImage>(_context);
+        public IGenericsRepository<VariationAttribute> VariationAttributeRepository 
+        => _variationAttribute_repository
+           ??= new GenericRepository<VariationAttribute>(_context);
+        public IGenericsRepository<VariationOption> VariationOptionRepository
+        => _variation_option_repository
+           ??= new GenericRepository<VariationOption>(_context);
+
+        public IOrderRepository OrderRepository
+        => _orderRepository ??= new OrderRepository(_context);
+
+        public IDiscountRepository DiscountRepository
+            => _discountRepository ??= new DiscountRepository(_context);
+
+        public ICustomerRepository CustomerRepository
+            => _customerRepository ??= new CustomerRepository(_context);
+
+        
         public async Task ExecuteInTransactionAsync(Func<Task> action)
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();

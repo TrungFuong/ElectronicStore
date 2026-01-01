@@ -16,5 +16,12 @@ namespace Domain.Constants
         public const string ORDER_ID_PREFIX = "ORD";
         public const string DISCOUNT_ID_PREFIX = "DSC";
         public const string ID_FORMAT = "{0:D4}";
+
+        public const string IMAGE_ID_PREFIX = "IMG";
+        public const string VARIATION_ID_PREFIX = "VAR";
+        public const string SPECIFICATION_ID_PREFIX = "SPC";
+        public const string OPTION_ID_PREFIX = "OTP";
+        
+
     }
 }
