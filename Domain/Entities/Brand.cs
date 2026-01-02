@@ -15,6 +15,7 @@ namespace Domain.Entities
         [StringLength(500)]
         [Unicode]
         public string? BrandDescription { get; set; }
+        public bool IsActive { get; set; } = true;
         public ICollection<Product> Products { get; set; } = new List<Product>();
     }
 }

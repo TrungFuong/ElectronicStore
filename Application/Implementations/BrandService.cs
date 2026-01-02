@@ -4,11 +4,6 @@ using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Implementations
 {
@@ -21,7 +16,6 @@ namespace Application.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        //PRIVATE: GENERATE ID 
         private async Task<string> GenerateBrandIdAsync()
         {
             var lastBrand = (await _unitOfWork.BrandRepository.GetAllAsync())
@@ -37,23 +31,20 @@ namespace Application.Implementations
             return Prefixes.BRAND_ID_PREFIX + nextNumber.ToString("D4");
         }
 
-        // CREATE
         public async Task CreateAsync(CreateBrandRequest request)
         {
-            var count = await _unitOfWork.CategoryRepository.CountAsync();
-
             var brand = new Brand
             {
                 BrandId = await GenerateBrandIdAsync(),
                 BrandName = request.BrandName,
-                BrandDescription = request.BrandDescription
+                BrandDescription = request.BrandDescription,
+                IsActive = request.IsActive ?? true
             };
 
             await _unitOfWork.BrandRepository.AddAsync(brand);
             await _unitOfWork.CommitAsync();
         }
 
-        //READ
         public async Task<IEnumerable<BrandResponse>> GetAllAsync()
         {
             var brands = await _unitOfWork.BrandRepository.GetAllAsync();
@@ -62,37 +53,44 @@ namespace Application.Implementations
             {
                 BrandId = b.BrandId,
                 BrandName = b.BrandName,
-                BrandDescription = b.BrandDescription
+                BrandDescription = b.BrandDescription,
+                IsActive = b.IsActive
             });
         }
 
-        // UPDATE
         public async Task<bool> UpdateAsync(UpdateBrandRequest request)
         {
             var brand = await _unitOfWork.BrandRepository.GetAsync(b => b.BrandId == request.BrandId);
             if (brand == null) return false;
 
-            brand.BrandName = request.BrandName;
-            brand.BrandDescription = request.BrandDescription;
+            if (request.BrandName != null) brand.BrandName = request.BrandName;
+            if (request.BrandDescription != null) brand.BrandDescription = request.BrandDescription;
+            if (request.IsActive.HasValue) brand.IsActive = request.IsActive.Value;
 
             _unitOfWork.BrandRepository.Update(brand);
             await _unitOfWork.CommitAsync();
             return true;
         }
 
-        // DELETE
-        public async Task<bool> DeleteAsync(DeleteBrandRequest request)
+        public async Task<bool> SetActiveAsync(string brandId, bool isActive)
         {
-            var brand = await _unitOfWork.BrandRepository
-                .GetAsync(b => b.BrandId == request.BrandId);
-
+            var brand = await _unitOfWork.BrandRepository.GetAsync(b => b.BrandId == brandId);
             if (brand == null) return false;
 
-            _unitOfWork.BrandRepository.SoftDelete(brand);
+            brand.IsActive = isActive;
+            _unitOfWork.BrandRepository.Update(brand);
             await _unitOfWork.CommitAsync();
             return true;
         }
 
+        public async Task<bool> DeleteAsync(DeleteBrandRequest request)
+        {
+            var brand = await _unitOfWork.BrandRepository.GetAsync(b => b.BrandId == request.BrandId);
+            if (brand == null) return false;
 
+            _unitOfWork.BrandRepository.SoftDelete(brand); // IsActive = false
+            await _unitOfWork.CommitAsync();
+            return true;
+        }
     }
 }

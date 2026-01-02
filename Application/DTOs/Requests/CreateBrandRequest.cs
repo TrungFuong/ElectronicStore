@@ -12,7 +12,7 @@ namespace Application.DTOs.Requests
         [Required]
         public string BrandName { get; set; }
         public string? BrandDescription { get; set; }
-    
+        public bool? IsActive { get; set; }
 
     }
 }
