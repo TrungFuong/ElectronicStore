@@ -200,16 +200,17 @@ namespace Infrastructure.DataAccess
                 .WithMany()
                 .HasForeignKey(o => o.AttributeId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // Cart
+            // Cart (1 Account - 1 Cart)
             modelBuilder.Entity<Cart>()
                 .HasIndex(c => c.AccountId)
-                .IsUnique(); // 1 account chỉ có 1 cart
+                .IsUnique();
 
-            modelBuilder.Entity<Cart>()
-                .HasOne(c => c.Account)
-                .WithMany() // Account hiện chưa có navigation carts
-                .HasForeignKey(c => c.AccountId)
+            modelBuilder.Entity<Account>()
+                .HasOne(a => a.Cart)
+                .WithOne()
+                .HasForeignKey<Cart>(c => c.AccountId)
                 .OnDelete(DeleteBehavior.Restrict);
+
 
             // CartItem
             modelBuilder.Entity<CartItem>()
