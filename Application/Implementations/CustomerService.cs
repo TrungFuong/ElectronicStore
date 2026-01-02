@@ -91,5 +91,23 @@ namespace Application.Implementations
             await _unitOfWork.CommitAsync();
             return true;
         }
+        public async Task<CustomerResponse?> GetByAccountIdAsync(string accountId)
+        {
+            var c = await _unitOfWork.CustomerRepository
+                .GetAsync(x => x.AccountId == accountId);
+
+            if (c == null) return null;
+
+            return new CustomerResponse
+            {
+                CustomerId = c.CustomerId,
+                CustomerName = c.CustomerName,
+                CustomerEmail = c.CustomerEmail,
+                CustomerPhone = c.CustomerPhone,
+                CustomerAddress = c.CustomerAddress,
+                CustomerDOB = c.CustomerDOB,
+                AccountId = c.AccountId
+            };
+        }
     }
 }

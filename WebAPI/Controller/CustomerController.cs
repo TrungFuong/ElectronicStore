@@ -1,8 +1,9 @@
 using Application.DTOs.Requests;
-using Application.Interfaces;
 using Application.DTOs.Responses;
+using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -20,6 +21,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request)
         {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var id = await _customerService.CreateAsync(request);
             return Ok(new GeneralGetResponse { Data = new { CustomerId = id }, Message = "Customer created" });
         }
@@ -31,13 +33,23 @@ namespace API.Controllers
             var data = await _customerService.GetAllAsync();
             return Ok(new GeneralGetResponse { Data = data });
         }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(string id)
+        [HttpGet("by-account/{accountId}")]
+        public async Task<IActionResult> GetByAccountId(string accountId)
         {
-            var customer = await _customerService.GetByIdAsync(id);
-            if (customer == null) return NotFound(new GeneralGetResponse { Success = false, Message = "Customer not found" });
-            return Ok(new GeneralGetResponse { Data = customer });
+            var customer = await _customerService.GetByAccountIdAsync(accountId);
+
+            if (customer == null)
+                return NotFound(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = "Customer not found"
+                });
+
+            return Ok(new GeneralGetResponse
+            {
+                Success = true,
+                Data = customer
+            });
         }
 
         [HttpPut]

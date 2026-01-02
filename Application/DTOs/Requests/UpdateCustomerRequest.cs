@@ -19,6 +19,6 @@ namespace Application.DTOs.Requests
         [MaxLength(255)]
         public string CustomerAddress { get; set; } = null!;
         public DateOnly CustomerDOB { get; set; }
-        public string? AccountId { get; set; }
+        public string? AccountId { get; set; } = null!;
     }
 }

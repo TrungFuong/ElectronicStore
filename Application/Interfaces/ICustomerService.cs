@@ -12,5 +12,7 @@ namespace Application.Interfaces
         Task<CustomerResponse?> GetByIdAsync(string customerId);
         Task<bool> UpdateAsync(UpdateCustomerRequest request);
         Task<bool> DeleteAsync(string customerId);
+
+        Task<CustomerResponse?> GetByAccountIdAsync(string accountId);
     }
 }
