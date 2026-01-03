@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Responses
 {
@@ -20,6 +21,11 @@ namespace Application.DTOs.Responses
         public decimal DiscountAmount { get; set; }
         public decimal Total { get; set; }
         public string ShippingAddress { get; set; } = null!;
+
+        public string ReceiverName { get; set; } = null!;
+
+        public string ReceiverPhone { get; set; } = null!;
+
         public string? Note { get; set; }
         public DateOnly CreatedAt { get; set; }
         public DateOnly UpdatedAt { get; set; }

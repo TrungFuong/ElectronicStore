@@ -1,4 +1,4 @@
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +33,7 @@ namespace API.Controllers
             var data = await _customerService.GetAllAsync();
             return Ok(new GeneralGetResponse { Data = data });
         }
+
         [HttpGet("by-account/{accountId}")]
         public async Task<IActionResult> GetByAccountId(string accountId)
         {
@@ -53,7 +54,6 @@ namespace API.Controllers
         }
 
         [HttpPut]
-        //[Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update([FromBody] UpdateCustomerRequest request)
         {
             var ok = await _customerService.UpdateAsync(request);

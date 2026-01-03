@@ -113,7 +113,7 @@ namespace Infrastructure.Migrations
                     ProductName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     ProductDescription = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "date", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "date", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "date", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CategoryId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     BrandId = table.Column<string>(type: "nvarchar(450)", nullable: true)
@@ -222,14 +222,34 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Carts",
+                columns: table => new
+                {
+                    CartId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    AccountId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carts", x => x.CartId);
+                    table.ForeignKey(
+                        name: "FK_Carts_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Customers",
                 columns: table => new
                 {
                     CustomerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CustomerName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CustomerEmail = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CustomerPhone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    CustomerAddress = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    CustomerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CustomerEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CustomerPhone = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CustomerAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CustomerDOB = table.Column<DateOnly>(type: "date", nullable: false),
                     AccountId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
@@ -296,6 +316,34 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CartItems",
+                columns: table => new
+                {
+                    CartItemId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CartId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    VariationId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CartItems", x => x.CartItemId);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Carts_CartId",
+                        column: x => x.CartId,
+                        principalTable: "Carts",
+                        principalColumn: "CartId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CartItems_ProductVariations_VariationId",
+                        column: x => x.VariationId,
+                        principalTable: "ProductVariations",
+                        principalColumn: "VariationId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Orders",
                 columns: table => new
                 {
@@ -305,6 +353,8 @@ namespace Infrastructure.Migrations
                     DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     ShippingAddress = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ReceiverName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ReceiverPhone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Note = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     CreatedAt = table.Column<DateOnly>(type: "date", nullable: false),
                     UpdatedAt = table.Column<DateOnly>(type: "date", nullable: false),
@@ -446,6 +496,23 @@ namespace Infrastructure.Migrations
                 filter: "[StaffId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CartItems_CartId_VariationId",
+                table: "CartItems",
+                columns: new[] { "CartId", "VariationId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItems_VariationId",
+                table: "CartItems",
+                column: "VariationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Carts_AccountId",
+                table: "Carts",
+                column: "AccountId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Customers_AccountId",
                 table: "Customers",
                 column: "AccountId",
@@ -537,6 +604,9 @@ namespace Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "CartItems");
+
+            migrationBuilder.DropTable(
                 name: "DiscountUsages");
 
             migrationBuilder.DropTable(
@@ -556,6 +626,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "VariationOptions");
+
+            migrationBuilder.DropTable(
+                name: "Carts");
 
             migrationBuilder.DropTable(
                 name: "Discounts");

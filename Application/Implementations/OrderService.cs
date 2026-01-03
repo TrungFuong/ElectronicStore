@@ -1,4 +1,4 @@
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Constants;
@@ -20,23 +20,28 @@ namespace Application.Implementations
 
         public async Task<string> CreateOrderAsync(CreateOrderRequest request)
         {
-            if (request == null) throw new ArgumentNullException(nameof(request));
-            if (request.Items == null || !request.Items.Any()) throw new ArgumentException("Order must contain at least one item.");
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
 
-            decimal subtotal = request.Items.Sum(i => i.UnitPrice * i.Quantity);
-            decimal discountAmount = 0m;
+            if (request.Items == null || !request.Items.Any())
+                throw new ArgumentException("Order must contain at least one item.");
 
-            // discount logic omitted intentionally; leave hooks here to query discount repository later
-            var orderId = Prefixes.ORDER_ID_PREFIX + string.Format(Prefixes.ID_FORMAT, await _unitOfWork.OrderRepository.CountAsync() + 1);
+            var orderId = Prefixes.ORDER_ID_PREFIX +
+                          string.Format(
+                              Prefixes.ID_FORMAT,
+                              await _unitOfWork.OrderRepository.CountAsync() + 1
+                          );
+
+            decimal subtotal = 0m;
+            decimal orderDiscount = 0m; // discount TOÀN ĐƠN
 
             var order = new Order
             {
                 OrderId = orderId,
                 OrderStatus = EnumOrderStatus.Pending,
-                SubTotal = subtotal,
-                DiscountAmount = discountAmount,
-                Total = subtotal - discountAmount,
                 ShippingAddress = request.ShippingAddress,
+                ReceiverName = request.ReceiverName,
+                ReceiverPhone = request.ReceiverPhone,
                 Note = request.Note ?? string.Empty,
                 CreatedAt = DateOnly.FromDateTime(DateTime.Now),
                 UpdatedAt = DateOnly.FromDateTime(DateTime.Now),
@@ -45,18 +50,40 @@ namespace Application.Implementations
 
             foreach (var item in request.Items)
             {
-                var od = new OrderDetail
+                // 🔥 LẤY VARIATION TỪ DB
+                var variation = await _unitOfWork.ProductVariationRepository
+                    .GetAsync(v => v.VariationId == item.VariationId);
+
+                if (variation == null)
+                    throw new InvalidOperationException($"Variation not found: {item.VariationId}");
+
+                if (variation.StockQuantity < item.Quantity)
+                    throw new InvalidOperationException($"Insufficient stock for variation {item.VariationId}");
+
+                // ✅ SNAPSHOT GIÁ TẠI THỜI ĐIỂM MUA
+                decimal unitPrice = variation.Price;
+                decimal lineTotal = unitPrice * item.Quantity;
+
+                subtotal += lineTotal;
+
+                order.OrderDetails.Add(new OrderDetail
                 {
-                    OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid().ToString(),
+                    OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid(),
                     OrderId = orderId,
-                    VariationId = item.VariationId,
-                    UnitPrice = item.UnitPrice,
+                    VariationId = variation.VariationId,
+                    UnitPrice = unitPrice,      // 🔒 GIÁ ĐÃ CHỐT
                     Quantity = item.Quantity,
-                    DiscountAmount = 0m,
-                    Total = item.UnitPrice * item.Quantity
-                };
-                order.OrderDetails.Add(od);
+                    DiscountAmount = 0m,        // ❌ KHÔNG DISCOUNT LẺ
+                    Total = lineTotal
+                });
             }
+
+            // 🔥 DISCOUNT TOÀN ĐƠN (voucher / promotion)
+            // orderDiscount = CalculateOrderDiscount(subtotal, request.DiscountId);
+
+            order.SubTotal = subtotal;
+            order.DiscountAmount = orderDiscount;
+            order.Total = subtotal - orderDiscount;
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
@@ -65,6 +92,7 @@ namespace Application.Implementations
 
             return orderId;
         }
+
 
         public async Task<IEnumerable<OrderResponse>> GetAllAsync()
         {
@@ -83,6 +111,8 @@ namespace Application.Implementations
                 DiscountAmount = o.DiscountAmount,
                 Total = o.Total,
                 ShippingAddress = o.ShippingAddress,
+                ReceiverName = o.ReceiverName,
+                ReceiverPhone = o.ReceiverPhone,
                 Note = o.Note,
                 CreatedAt = o.CreatedAt,
                 UpdatedAt = o.UpdatedAt,
@@ -110,6 +140,8 @@ namespace Application.Implementations
                 DiscountAmount = o.DiscountAmount,
                 Total = o.Total,
                 ShippingAddress = o.ShippingAddress,
+                ReceiverName = o.ReceiverName,
+                ReceiverPhone = o.ReceiverPhone,
                 Note = o.Note,
                 CreatedAt = o.CreatedAt,
                 UpdatedAt = o.UpdatedAt,
@@ -135,6 +167,8 @@ namespace Application.Implementations
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
+                order.ReceiverName = request.ReceiverName;
+                order.ReceiverPhone = request.ReceiverPhone;
                 order.ShippingAddress = request.ShippingAddress;
                 order.Note = request.Note ?? order.Note;
                 order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
