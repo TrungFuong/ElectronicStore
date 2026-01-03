@@ -9,13 +9,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-//Generic Repository Pattern
-//T: Entity Type
-//Cung cấp các phương thức chung để thao tác với các thực thể trong cơ sở dữ liệu
-
-//Interface: Chúng nó làm gì
-//Abstract Class: Chúng nó là gì
-
 namespace Infrastructure.Repositories
 {
     public class GenericRepository<T> : IGenericsRepository<T> where T : class
@@ -156,9 +149,39 @@ namespace Infrastructure.Repositories
 
         public void SoftDelete(T entity)
         {
-            PropertyInfo propertyInfo = entity.GetType().GetProperty("IsActive");
-            propertyInfo.SetValue(entity, false);
-            _context.Set<T>().Update(entity);
+            // Safely set IsActive = false if property exists
+            var prop = entity.GetType().GetProperty("IsActive", BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null && prop.CanWrite && prop.PropertyType == typeof(bool))
+            {
+                prop.SetValue(entity, false);
+                _context.Set<T>().Update(entity);
+                return;
+            }
+
+            // If entity has an Account navigation with IsActive, attempt to disable account
+            var accProp = entity.GetType().GetProperty("Account", BindingFlags.Public | BindingFlags.Instance);
+            if (accProp != null && accProp.CanRead)
+            {
+                var accValue = accProp.GetValue(entity);
+                if (accValue != null)
+                {
+                    var accIsActiveProp = accValue.GetType().GetProperty("IsActive", BindingFlags.Public | BindingFlags.Instance);
+                    if (accIsActiveProp != null && accIsActiveProp.CanWrite && accIsActiveProp.PropertyType == typeof(bool))
+                    {
+                        accIsActiveProp.SetValue(accValue, false);
+                        // update account and entity separately
+                        var accEntry = _context.Entry(accValue);
+                        if (accEntry != null)
+                        {
+                            accEntry.State = EntityState.Modified;
+                        }
+                        _context.Set<T>().Update(entity);
+                        return;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("Entity does not support soft delete (missing IsActive property).");
         }
 
         public void RemoveRange(IEnumerable<T> entities)

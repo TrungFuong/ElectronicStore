@@ -1,8 +1,6 @@
-﻿using Application.DTOs.Requests;
-using System;
+using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Application.Interfaces
@@ -10,6 +8,9 @@ namespace Application.Interfaces
     public interface IAdminAccountService
     {
         Task<bool> AddStaffAsync(AddStaffRequest request);
-
+        Task<IEnumerable<StaffResponse>> GetAllStaffAsync();
+        Task<StaffResponse?> GetByIdAsync(string staffId);
+        Task<bool> UpdateStaffAsync(UpdateStaffRequest request);
+        Task<bool> DeleteStaffAsync(string staffId);
     }
 }

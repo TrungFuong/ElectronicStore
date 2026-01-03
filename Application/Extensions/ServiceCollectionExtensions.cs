@@ -39,6 +39,9 @@ namespace Application.Extensions
 
             services.AddScoped<ICartService, CartService>();
 
+            // Admin account / staff management
+            services.AddScoped<IAdminAccountService, AdminAccountService>();
+
             return services;
         }
     }
