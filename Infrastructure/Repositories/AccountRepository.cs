@@ -2,6 +2,7 @@
 using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,14 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task<Account?> GetByEmailAsync(string email)
+        {
+            return await _context.Accounts
+                .Include(a => a.Customer)
+                .Include(a => a.Staff)
+                .FirstOrDefaultAsync(a => a.Email == email);
+        }
+
         public async Task<Account?> GetByIdAsync(string accountId)
         {
             return await _context.Accounts
@@ -29,12 +38,6 @@ namespace Infrastructure.Repositories
 
         public async Task<Account?> GetByPhoneAsync(string phone)
         {
-            var all = await _context.Accounts.ToListAsync();
-            foreach (var acc in all)
-            {
-                Console.WriteLine($"DB PHONE: '{acc.Phone}'");
-            }
-
             return await _context.Accounts
                 .Include(a => a.Customer)
                 .Include(a => a.Staff)

@@ -1,5 +1,6 @@
 ﻿using Application.Implementations;
 using Application.Interfaces;
+using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.DataAccess;
 using Infrastructure.Repositories;
@@ -16,38 +17,37 @@ namespace Infrastructure.Extensions
             this IServiceCollection services,
             IConfiguration config)
         {
-            // Register DbContext
+            // bdCntext
             services.AddDbContext<DBContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
-            //Product Repository
-            services.AddScoped<IProductRepository, ProductRepository>();
-
-
-            // Register Repositories
+            // Repo
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IBrandRepository, BrandRepository>();
+            services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<ICartItemRepository, CartItemRepository>();
+            services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
 
-            // Register UnitOfWork
+            // Uow
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // Register security utilities
+            // Auth
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IAdminAccountService, AdminAccountService>();
 
-            // Brand Repository
-            services.AddScoped<IBrandRepository, BrandRepository>();
+            // Email (OTP)
+            services.Configure<EmailSettings>(
+                config.GetSection("EmailSettings"));
 
-            // Category repository & Service
-            
-            services.AddScoped<ICategoryRepository, CategoryRepository>();
-            // Cart Repository
-            services.AddScoped<ICartRepository, CartRepository>();
-            services.AddScoped<ICartItemRepository, CartItemRepository>();
-            // Product Variation Repository
-            services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
+            services.AddScoped<IEmailService, GmailEmailService>();
+
+            // OTP
+            services.AddScoped<IOTPService, OTPService>();
 
             return services;
         }

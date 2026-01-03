@@ -11,7 +11,8 @@ namespace Domain.Interfaces
     {
         // Dùng cho login
         Task<Account?> GetByPhoneAsync(string phone);
-
+        // Reset
+        Task<Account?> GetByEmailAsync(string email);
         // Dùng cho refresh token
         Task<Account?> GetWithRefreshTokensAsync(string accountId);
         //Change pass

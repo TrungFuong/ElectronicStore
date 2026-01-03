@@ -22,13 +22,15 @@ namespace Application.Implementations
         private readonly IPasswordHasher _passwordHasher;
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IOTPService _otpService;
 
         public AuthService(
             IAccountRepository accountRepo,
             ITokenService tokenService,
             IPasswordHasher passwordHasher,
             IConfiguration config,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IOTPService otpService)
 
         {
             _accountRepo = accountRepo;
@@ -36,6 +38,7 @@ namespace Application.Implementations
             _passwordHasher = passwordHasher;
             _config = config;
             _unitOfWork = unitOfWork;
+            _otpService = otpService;
         }
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
@@ -214,9 +217,56 @@ namespace Application.Implementations
             }
         }
 
-        public Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+        public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
         {
-            throw new NotImplementedException();
+            // Lấy account theo email   
+            var account = await _accountRepo.GetByEmailAsync(request.Email);
+
+            if (account == null || !account.IsActive)
+                throw new Exception("Không thể đặt lại mật khẩu");
+
+            // Verify OTP (service sẽ tự invalidate)
+            await _otpService.ValidateOTPAsync(
+               request.Email,
+               EnumOTPPurpose.ResetPassword,
+               request.OTP
+           );
+
+            // Hash mật khẩu mới
+            var newHash = _passwordHasher.HashPassword(request.NewPassword);
+            account.HashPassword = newHash;
+
+            _unitOfWork.AccountRepository.Update(account);
+
+            // Revoke toàn bộ refresh token cũ
+            var tokens = await _unitOfWork.RefreshTokenRepository
+                .GetByAccountIdAsync(account.AccountId);
+
+            if (tokens != null)
+            {
+                foreach (var t in tokens)
+                {
+                    t.IsRevoked = true;
+                    t.RevokedAt = DateTime.UtcNow;
+                    _unitOfWork.RefreshTokenRepository.Update(t);
+                }
+            }
+
+            // Commit transaction
+            await _unitOfWork.CommitAsync();
+
+            return true;
         }
+
+        public async Task ForgotPasswordAsync(string email)
+        {
+            var account = await _accountRepo.GetByEmailAsync(email);
+
+            if (account == null || !account.IsActive)
+                return;
+
+            await _otpService.GenerateAndSendOTPAsync(email, EnumOTPPurpose.ResetPassword);
+        }
+
     }
 }

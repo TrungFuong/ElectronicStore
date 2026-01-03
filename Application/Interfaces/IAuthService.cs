@@ -26,7 +26,9 @@ namespace Application.Interfaces
 
         Task<bool> ChangePasswordAsync(ChangePasswordRequest request);
 
-        // 5. Reset mật khẩu (quên mật khẩu, kèm otp)
+        // Reset mật khẩu (quên mật khẩu, kèm otp)
         Task<bool> ResetPasswordAsync(ResetPasswordRequest request);
+
+        Task ForgotPasswordAsync(string email);
     }
 }

@@ -11,6 +11,8 @@ namespace Domain.Entities
         [MaxLength(20)]
         public string Phone { get; set; }
         [Required]
+        public string Email { get; set; }
+        [Required]
         [MaxLength(200)]
         //pw lưu thì phải mã hóa
         public string HashPassword { get; set; }
@@ -24,5 +26,6 @@ namespace Domain.Entities
         public Staff? Staff { get; set; }
         public Cart? Cart { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<OTP> OTPs { get; set; }
     }
 }

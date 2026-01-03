@@ -121,6 +121,30 @@ namespace API.Controllers
             }
         }
 
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            await _authService.ForgotPasswordAsync(request.Email);
+
+            return Ok(new GeneralGetResponse
+            {
+                Success = true,
+                Message = "Nếu email tồn tại, OTP đã được gửi"
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            await _authService.ResetPasswordAsync(request);
+
+            return Ok(new GeneralGetResponse
+            {
+                Success = true,
+                Message = "Đặt lại mật khẩu thành công"
+            });
+        }
+
         [HttpPost("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)

@@ -30,6 +30,10 @@ namespace Infrastructure.Migrations
                     b.Property<string>("CustomerId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("HashPassword")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -88,9 +92,6 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("AccountId1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -101,10 +102,6 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("AccountId")
                         .IsUnique();
-
-                    b.HasIndex("AccountId1")
-                        .IsUnique()
-                        .HasFilter("[AccountId1] IS NOT NULL");
 
                     b.ToTable("Carts");
                 });
@@ -174,27 +171,22 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("CustomerAddress")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("CustomerDOB")
                         .HasColumnType("date");
 
                     b.Property<string>("CustomerEmail")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CustomerPhone")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("CustomerId");
 
@@ -278,6 +270,38 @@ namespace Infrastructure.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("DiscountUsages");
+                });
+
+            modelBuilder.Entity("Domain.Entities.OTP", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HashedOTP")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("OTPs");
                 });
 
             modelBuilder.Entity("Domain.Entities.Order", b =>
@@ -703,17 +727,11 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Cart", b =>
                 {
-                    b.HasOne("Domain.Entities.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Account", null)
                         .WithOne("Cart")
-                        .HasForeignKey("Domain.Entities.Cart", "AccountId1");
-
-                    b.Navigation("Account");
+                        .HasForeignKey("Domain.Entities.Cart", "AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.CartItem", b =>
@@ -770,6 +788,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("Discount");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Domain.Entities.OTP", b =>
+                {
+                    b.HasOne("Domain.Entities.Account", "Account")
+                        .WithMany("OTPs")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Domain.Entities.Order", b =>
@@ -914,6 +943,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("Cart");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("OTPs");
 
                     b.Navigation("RefreshTokens");
                 });

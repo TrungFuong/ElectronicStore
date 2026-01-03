@@ -7,9 +7,8 @@ namespace Infrastructure.DataAccess
 {
     public class DBContext : DbContext
     {
+        public DBContext() { }
         public DBContext(DbContextOptions<DBContext> options) : base(options) { }
-
-
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -26,8 +25,6 @@ namespace Infrastructure.DataAccess
                 });
             }
         }
-
-        
         public DbSet<Account> Accounts { get; set; } = null!;
         public DbSet<Brand> Brands { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
@@ -48,8 +45,8 @@ namespace Infrastructure.DataAccess
         public DbSet<VariationOption> VariationOptions { get; set; } = null!;
         public DbSet<ProductImage> ProductImages { get; set; } = null!;
         public DbSet<ProductSpecification> ProductSpecifications { get; set; } = null!;
+        public DbSet<OTP> OTPs { get; set; } = null!;
 
-        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var dateOnlyConverter = new ValueConverter<DateOnly, DateTime>(
@@ -258,6 +255,16 @@ namespace Infrastructure.DataAccess
                 new VariationAttribute { AttributeId = 4, Name = "Kích thước" },
                 new VariationAttribute { AttributeId = 5, Name = "Phiên bản" }
             );
+
+            //OTP
+            modelBuilder.Entity<OTP>()
+                .HasKey(x => x.Id);
+
+            modelBuilder.Entity<OTP>()
+              .HasOne(x => x.Account)
+              .WithMany(a => a.OTPs)
+              .HasForeignKey(x => x.AccountId)
+              .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

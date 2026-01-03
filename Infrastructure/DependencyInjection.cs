@@ -30,8 +30,8 @@ namespace Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-            
-            
+
+
             return services;
         }
     }

@@ -53,8 +53,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 
-
-
 var app = builder.Build();
 
 app.UseStaticFiles();
