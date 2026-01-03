@@ -49,6 +49,8 @@ namespace Application.Implementations
                 StaffName = request.StaffName,
                 Phone = request.Phone,
                 StaffDOB = request.StaffDOB,
+                // operational status for staff is tracked on Staff.IsActive
+                IsActive = true
             };
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
@@ -69,7 +71,8 @@ namespace Application.Implementations
                 Phone = s.Phone,
                 StaffDOB = s.StaffDOB,
                 AccountId = s.AccountId,
-                IsActive = s.Account?.IsActive ?? false
+                // Use Staff.IsActive as the canonical operational status for staff
+                IsActive = s.IsActive
             });
         }
 
@@ -84,7 +87,8 @@ namespace Application.Implementations
                 Phone = s.Phone,
                 StaffDOB = s.StaffDOB,
                 AccountId = s.AccountId,
-                IsActive = s.Account?.IsActive ?? false
+                // reflect Staff.IsActive
+                IsActive = s.IsActive
             };
         }
 
@@ -124,15 +128,16 @@ namespace Application.Implementations
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                // soft-disable account so staff cannot login
+                // mark staff as inactive (soft-delete)
+                staff.IsActive = false;
+                _unitOfWork.StaffRepository.Update(staff);
+
+                // also soft-disable associated account so staff cannot login
                 if (staff.Account != null)
                 {
                     staff.Account.IsActive = false;
                     _unitOfWork.AccountRepository.Update(staff.Account);
                 }
-
-                // also soft-delete staff record if supported
-                _unitOfWork.StaffRepository.SoftDelete(staff);
             });
 
             return true;

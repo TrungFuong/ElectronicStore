@@ -15,7 +15,7 @@ namespace Infrastructure.Migrations
                 table: "Staffs",
                 type: "bit",
                 nullable: false,
-                defaultValue: false);
+                defaultValue: true);
         }
 
         /// <inheritdoc />
