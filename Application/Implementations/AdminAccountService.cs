@@ -109,11 +109,45 @@ namespace Application.Implementations
                 staff.StaffName = request.StaffName;
                 staff.Phone = request.Phone;
                 staff.StaffDOB = request.StaffDOB;
+
+                // If client provided IsActive, apply it to both Staff and Account
+                if (request.IsActive.HasValue)
+                {
+                    staff.IsActive = request.IsActive.Value;
+
+                    if (staff.Account != null)
+                    {
+                        staff.Account.IsActive = request.IsActive.Value;
+                        _unitOfWork.AccountRepository.Update(staff.Account);
+                    }
+                }
+
                 _unitOfWork.StaffRepository.Update(staff);
 
                 if (staff.Account != null)
                 {
                     staff.Account.Phone = request.Phone;
+                    // account update already handled above when IsActive changed; ensure phone persisted
+                    _unitOfWork.AccountRepository.Update(staff.Account);
+                }
+            });
+
+            return true;
+        }
+
+        public async Task<bool> SetStaffStatusAsync(string staffId, bool isActive)
+        {
+            var staff = await _unitOfWork.StaffRepository.GetAsync(s => s.StaffId == staffId, s => s.Account);
+            if (staff == null) return false;
+
+            await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                staff.IsActive = isActive;
+                _unitOfWork.StaffRepository.Update(staff);
+
+                if (staff.Account != null)
+                {
+                    staff.Account.IsActive = isActive;
                     _unitOfWork.AccountRepository.Update(staff.Account);
                 }
             });
@@ -142,5 +176,6 @@ namespace Application.Implementations
 
             return true;
         }
+
     }
 }

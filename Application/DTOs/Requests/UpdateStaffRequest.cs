@@ -18,5 +18,8 @@ namespace Application.DTOs.Requests
 
         [Required]
         public DateOnly StaffDOB { get; set; }
+
+        // Nullable so clients can omit when not changing status
+        public bool? IsActive { get; set; }
     }
 }

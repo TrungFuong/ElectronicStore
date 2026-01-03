@@ -12,5 +12,6 @@ namespace Application.Interfaces
         Task<StaffResponse?> GetByIdAsync(string staffId);
         Task<bool> UpdateStaffAsync(UpdateStaffRequest request);
         Task<bool> DeleteStaffAsync(string staffId);
+        Task<bool> SetStaffStatusAsync(string staffId, bool isActive);
     }
 }

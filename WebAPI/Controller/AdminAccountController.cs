@@ -73,6 +73,15 @@ namespace API.Controllers
             }
         }
 
+        // New endpoint: toggle staff operational status (enable/disable)
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> SetStatus(string id, [FromQuery] bool isActive)
+        {
+            var ok = await _service.SetStaffStatusAsync(id, isActive);
+            if (!ok) return NotFound(new GeneralBoolResponse { Success = false, Message = "Staff not found" });
+            return Ok(new GeneralBoolResponse { Success = true, Message = isActive ? "Staff enabled" : "Staff disabled" });
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
