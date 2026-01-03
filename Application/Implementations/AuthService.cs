@@ -162,6 +162,7 @@ namespace Application.Implementations
             {
                 AccountId = Guid.NewGuid().ToString(),
                 Phone = request.Phone,
+                Email = request.Email,
                 HashPassword = hash,
                 Role = EnumRole.Customer,
                 IsActive = true
