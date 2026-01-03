@@ -13,6 +13,8 @@ namespace Application.Interfaces
     public interface ICategoryService
     {
         Task CreateAsync(CreateCategoryRequest request);
+        Task<bool> SetActiveAsync(string categoryId, bool isActive);
+
         Task<bool> UpdateAsync(UpdateCategoryRequest request);
         Task<bool> DeleteAsync(DeleteCategoryRequest request);
         Task<IEnumerable<CategoryResponse>> GetAllAsync();

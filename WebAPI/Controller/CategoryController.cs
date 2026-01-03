@@ -76,6 +76,16 @@ namespace API.Controllers
             });
         }
 
+        [HttpPatch("status")]
+        public async Task<IActionResult> SetStatus([FromBody] ToggleCategoryStatusRequest request)
+        {
+            var ok = await _categoryService.SetActiveAsync(request.CategoryId, request.IsActive);
+            if (!ok)
+                return NotFound(new GeneralBoolResponse { Success = false, Message = "Category không tồn tại" });
+
+            return Ok(new GeneralBoolResponse { Success = true, Message = "Cập nhật trạng thái thành công" });
+        }
+
         // DELETE api/categories
         [HttpDelete]
         public async Task<IActionResult> Delete([FromBody] DeleteCategoryRequest request)
