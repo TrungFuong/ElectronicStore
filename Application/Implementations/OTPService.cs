@@ -18,11 +18,14 @@ namespace Application.Implementations
         private readonly IAccountRepository _accountRepository;
 
         public OTPService(
+           IAccountRepository accountRepository,
            IOTPRepository otpRepository,
-           IEmailService emailService)
+           IEmailService emailService
+           )
         {
             _otpRepository = otpRepository;
             _emailService = emailService;
+            _accountRepository = accountRepository;
         }
 
         public static string Hash(string otp)
@@ -32,19 +35,19 @@ namespace Application.Implementations
             return Convert.ToBase64String(bytes);
         }
 
-        public async Task<string> GenerateAndSendOTPAsync(string accountId, EnumOTPPurpose purpose)
+        public async Task<string> GenerateAndSendOTPAsync(string email, EnumOTPPurpose purpose)
         {
-            await _otpRepository.DeleteInvalidOTPAsync(accountId);
+            var acc = await _accountRepository.GetByEmailAsync(email);
+            await _otpRepository.DeleteInvalidOTPAsync(acc.AccountId);
 
             var otp = Random.Shared.Next(100000, 999999).ToString();
 
             var hashedOtp = Hash(otp);
 
-            var acc = await _accountRepository.GetByIdAsync(accountId);
 
             var otpEntity = new OTP
             {
-                AccountId = accountId,
+                AccountId = acc.AccountId,
                 Purpose = purpose,
                 HashedOTP = hashedOtp,
                 ExpiredAt = DateTime.UtcNow.AddMinutes(5),

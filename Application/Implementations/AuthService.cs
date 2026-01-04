@@ -228,7 +228,7 @@ namespace Application.Implementations
 
             // Verify OTP (service sẽ tự invalidate)
             await _otpService.ValidateOTPAsync(
-               request.Email,
+               account.AccountId,
                EnumOTPPurpose.ResetPassword,
                request.OTP
            );
@@ -266,8 +266,15 @@ namespace Application.Implementations
             if (account == null || !account.IsActive)
                 return;
 
-            await _otpService.GenerateAndSendOTPAsync(email, EnumOTPPurpose.ResetPassword);
+            await _otpService.GenerateAndSendOTPAsync(account.Email, EnumOTPPurpose.ResetPassword);
         }
 
+        public async Task<Account> GetByEmail(string email)
+        {
+            var account = await _accountRepo.GetByEmailAsync(email);
+            if (account == null)
+                throw new Exception("Tài khoản không tồn tại.");
+            return account;
+        }
     }
 }

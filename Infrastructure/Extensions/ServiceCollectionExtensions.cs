@@ -31,6 +31,8 @@ namespace Infrastructure.Extensions
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<ICartItemRepository, CartItemRepository>();
             services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
+            services.AddScoped<IOTPRepository, OTPRepository>();
+
 
             // Uow
             services.AddScoped<IUnitOfWork, UnitOfWork>();
