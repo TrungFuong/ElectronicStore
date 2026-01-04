@@ -1,10 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
@@ -16,6 +13,27 @@ namespace Infrastructure.Repositories
         public StaffRepository(DBContext context) : base(context)
         {
             _context = context;
+        }
+
+        public async Task<Staff?> GetByIdWithAccountAsync(string staffId)
+        {
+            return await _context.Staffs
+                .Include(s => s.Account)
+                .FirstOrDefaultAsync(s => s.StaffId == staffId);
+        }
+
+        public async Task<Staff?> GetByAccountIdAsync(string accountId)
+        {
+            return await _context.Staffs
+                .Include(s => s.Account)
+                .FirstOrDefaultAsync(s => s.AccountId == accountId);
+        }
+
+        public async Task<Staff?> GetByPhoneAsync(string phone)
+        {
+            return await _context.Staffs
+                .Include(s => s.Account)
+                .FirstOrDefaultAsync(s => s.Phone == phone);
         }
     }
 }

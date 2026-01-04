@@ -12,6 +12,7 @@ namespace Application.Interfaces
     {
         Task CreateAsync(CreateBrandRequest request);
         Task<IEnumerable<BrandResponse>> GetAllAsync();
+        Task<bool> SetActiveAsync(string brandId, bool isActive);
 
         Task<bool> UpdateAsync(UpdateBrandRequest request);
         Task<bool> DeleteAsync(DeleteBrandRequest request);

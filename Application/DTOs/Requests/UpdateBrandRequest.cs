@@ -14,6 +14,6 @@ namespace Application.DTOs.Requests
         
         public string BrandName { get; set; }    
         public string BrandDescription { get; set; }
-
+        public bool? IsActive { get; set; }
     }
 }

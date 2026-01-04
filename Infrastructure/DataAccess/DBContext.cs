@@ -85,6 +85,11 @@ namespace Infrastructure.DataAccess
                 .WithOne(p => p.Brand)
                 .HasForeignKey(p => p.BrandId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Set default value for IsActive
+            modelBuilder.Entity<Brand>()
+                .Property(b => b.IsActive)
+                .HasDefaultValue(true);
 
             // Category - Product
             modelBuilder.Entity<Category>()

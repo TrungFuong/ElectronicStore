@@ -65,7 +65,8 @@ namespace Application.Implementations
             {
                 CategoryId = c.CategoryId,
                 CategoryName = c.CategoryName,
-                CategoryDescription = c.CategoryDescription
+                CategoryDescription = c.CategoryDescription,
+                IsActive = c.IsActive
             });
         }
 
@@ -73,7 +74,7 @@ namespace Application.Implementations
         public async Task<bool> UpdateAsync(UpdateCategoryRequest request)
         {
             var category = await _unitOfWork.CategoryRepository
-                .GetAsync(c => c.CategoryId == request.CategoryId && c.IsActive);
+                .GetAsync(c => c.CategoryId == request.CategoryId);
 
             if (category == null) return false;
 
@@ -85,12 +86,26 @@ namespace Application.Implementations
 
             return true;
         }
+        // SET ACTIVE/INACTIVE
+        public async Task<bool> SetActiveAsync(string categoryId, bool isActive)
+        {
+            var category = await _unitOfWork.CategoryRepository
+                .GetAsync(c => c.CategoryId == categoryId);
+
+            if (category == null) return false;
+
+            category.IsActive = isActive;
+
+            _unitOfWork.CategoryRepository.Update(category);
+            await _unitOfWork.CommitAsync();
+            return true;
+        }
 
         // DELETE
         public async Task<bool> DeleteAsync(DeleteCategoryRequest request)
         {
             var category = await _unitOfWork.CategoryRepository
-                .GetAsync(c => c.CategoryId == request.CategoryId && c.IsActive);
+                .GetAsync(c => c.CategoryId == request.CategoryId);
 
             if (category == null) return false;
 
