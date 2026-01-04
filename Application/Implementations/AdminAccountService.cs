@@ -112,13 +112,13 @@ namespace Application.Implementations
                 staff.StaffDOB = request.StaffDOB;
 
                 // If client provided IsActive, apply it to both Staff and Account
-                if (request.IsActive.HasValue)
+                if (request.IsActive != null)
                 {
-                    staff.IsActive = request.IsActive.Value;
+                    staff.IsActive = request.IsActive;
 
                     if (staff.Account != null)
                     {
-                        staff.Account.IsActive = request.IsActive.Value;
+                        staff.Account.IsActive = request.IsActive;
                         _unitOfWork.AccountRepository.Update(staff.Account);
                     }
                 }
