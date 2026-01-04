@@ -11,6 +11,7 @@ namespace Application.DTOs.Requests
     public class AddStaffRequest
     {
         public string Phone { get; set; }
+        public string Email { get; set; }
         public string StaffName { get; set; }
         public DateOnly StaffDOB { get; set; }
     }

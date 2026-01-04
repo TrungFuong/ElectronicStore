@@ -45,6 +45,13 @@ namespace API.Controllers
             try
             {
                 var result = await _authService.LoginAsync(request);
+                Response.Cookies.Append("access_token", result.AccessToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = false, // localhost -> false | prod -> true
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTime.UtcNow.AddMinutes(15)
+                });
                 var response = new GeneralGetResponse
                 {
                     Message = "User logged in successfully",
