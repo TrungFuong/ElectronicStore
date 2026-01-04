@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/brands")]
-[Authorize(Roles = "Admin")]
+
 public class BrandController : ControllerBase
 {
     private readonly IBrandService _brandService;
@@ -17,6 +17,7 @@ public class BrandController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] CreateBrandRequest request)
     {
         var response = new GeneralBoolResponse();
@@ -57,6 +58,7 @@ public class BrandController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update([FromBody] UpdateBrandRequest request)
     {
         var response = new GeneralBoolResponse();
@@ -84,6 +86,7 @@ public class BrandController : ControllerBase
     }
 
     [HttpPatch("status")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> SetStatus([FromBody] ToggleBrandStatusRequest request)
     {
         var ok = await _brandService.SetActiveAsync(request.BrandId, request.IsActive);
@@ -95,6 +98,7 @@ public class BrandController : ControllerBase
     }
 
     [HttpDelete]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete([FromBody] DeleteBrandRequest request)
     {
         var response = new GeneralBoolResponse();

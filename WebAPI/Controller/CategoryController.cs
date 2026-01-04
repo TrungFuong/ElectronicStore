@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace API.Controllers
 {
-    [Authorize ]
+    
     [ApiController]
     [Route("api/categories")]
     public class CategoryController : ControllerBase
@@ -25,6 +25,7 @@ namespace API.Controllers
 
         // POST api/categories
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
         {
             try
@@ -59,6 +60,7 @@ namespace API.Controllers
 
         // PUT api/categories
         [HttpPut]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update([FromBody] UpdateCategoryRequest request)
         {
             var success = await _categoryService.UpdateAsync(request);
@@ -78,6 +80,7 @@ namespace API.Controllers
         }
 
         [HttpPatch("status")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> SetStatus([FromBody] ToggleCategoryStatusRequest request)
         {
             var ok = await _categoryService.SetActiveAsync(request.CategoryId, request.IsActive);
@@ -89,6 +92,7 @@ namespace API.Controllers
 
         // DELETE api/categories
         [HttpDelete]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete([FromBody] DeleteCategoryRequest request)
         {
             var success = await _categoryService.DeleteAsync(request);
