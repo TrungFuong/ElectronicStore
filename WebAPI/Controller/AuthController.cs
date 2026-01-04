@@ -48,8 +48,8 @@ namespace API.Controllers
                 Response.Cookies.Append("access_token", result.AccessToken, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = false, // localhost -> false | prod -> true
-                    SameSite = SameSiteMode.Lax,
+                    Secure = true, // localhost -> false | prod -> true
+                    SameSite = SameSiteMode.None,
                     Expires = DateTime.UtcNow.AddMinutes(15)
                 });
                 var response = new GeneralGetResponse
