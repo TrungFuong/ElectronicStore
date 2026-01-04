@@ -11,5 +11,6 @@ namespace Application.DTOs.Responses
         public string BrandId { get; set; }
         public string BrandName { get; set; }
         public string? BrandDescription { get; set; }
+        public bool IsActive { get; set; }
     }
 }

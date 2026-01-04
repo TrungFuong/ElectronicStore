@@ -11,6 +11,6 @@ namespace Application.DTOs.Responses
         public string CategoryId { get; set; }
         public string CategoryName { get; set; }
         public string? CategoryDescription { get; set; }
-
+        public bool IsActive { get; set; }
     }
 }

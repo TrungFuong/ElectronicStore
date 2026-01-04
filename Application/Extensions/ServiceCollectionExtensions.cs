@@ -36,8 +36,13 @@ namespace Application.Extensions
 
             // Customer
             services.AddScoped<ICustomerService, CustomerService>();
-
+            // dùng chung với AuthService
+            services.AddScoped<IRevenueService, RevenueService>();
+            // cart service
             services.AddScoped<ICartService, CartService>();
+
+            // Admin account / staff management
+            services.AddScoped<IAdminAccountService, AdminAccountService>();
 
             return services;
         }

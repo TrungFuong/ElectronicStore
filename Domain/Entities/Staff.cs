@@ -19,7 +19,9 @@ namespace Domain.Entities
         public DateOnly StaffDOB { get; set; }
         [Required]
         public string AccountId { get; set; }
-        //cái này gọi là navigation property trong ef core, giúp truy vấn 2 chiều mà không cần join thủ công
-        public Account Account { get; set; }
+        // Navigation
+        public Account? Account { get; set; }
+        // Soft-delete flag
+        public bool IsActive { get; set; } = true;
     }
 }
