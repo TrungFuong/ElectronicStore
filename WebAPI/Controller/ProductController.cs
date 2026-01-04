@@ -92,7 +92,7 @@ namespace API.Controllers
 
         // SOFT DELETE PRODUCT
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(string id)
         {
             var ok = await _productService.DeleteProductAsync(id);

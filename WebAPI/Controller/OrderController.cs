@@ -27,7 +27,7 @@ namespace API.Controllers
 
         // Read all (staff)
         [HttpGet]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetAll()
         {
             var list = await _orderService.GetAllAsync();
@@ -45,7 +45,7 @@ namespace API.Controllers
 
         // Update
         [HttpPut("{id}")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateOrderRequest request)
         {
             request.OrderId = id;
@@ -56,7 +56,7 @@ namespace API.Controllers
 
         // Delete (soft)
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(string id)
         {
             var ok = await _orderService.DeleteOrderAsync(id);
@@ -65,7 +65,7 @@ namespace API.Controllers
         }
 
         [HttpPost("confirm")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Confirm([FromBody] IdRequest request)
         {
             await _orderService.ConfirmOrderAsync(request.Id);
@@ -73,7 +73,7 @@ namespace API.Controllers
         }
 
         [HttpPost("ship")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Ship([FromBody] IdRequest request)
         {
             await _orderService.ShipOrderAsync(request.Id);
@@ -81,7 +81,7 @@ namespace API.Controllers
         }
 
         [HttpPost("cancel")]
-        // [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Cancel([FromBody] IdRequest request)
         {
             await _orderService.CancelOrderAsync(request.Id);

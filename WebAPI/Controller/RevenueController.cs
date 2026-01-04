@@ -17,8 +17,8 @@ namespace API.Controllers
             _revenueService = revenueService;
         }
 
-        [HttpGet("day")]
-       // [Authorize(Roles = "Staff")]
+       [HttpGet("day")]
+       [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetByDay([FromQuery] DateOnly day)
         {
             var total = await _revenueService.GetTotalRevenueByDayAsync(day);
@@ -26,7 +26,7 @@ namespace API.Controllers
         }
 
         [HttpGet("month")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetByMonth([FromQuery] int year, [FromQuery] int month)
         {
             var total = await _revenueService.GetTotalRevenueByMonthAsync(year, month);

@@ -27,7 +27,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetAll()
         {
             var data = await _customerService.GetAllAsync();
@@ -53,7 +53,7 @@ namespace API.Controllers
         }
 
         [HttpPut]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Update([FromBody] UpdateCustomerRequest request)
         {
             var ok = await _customerService.UpdateAsync(request);
@@ -62,7 +62,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(string id)
         {
             var ok = await _customerService.DeleteAsync(id);
