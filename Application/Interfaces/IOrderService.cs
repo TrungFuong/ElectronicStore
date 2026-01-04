@@ -26,5 +26,7 @@ namespace Application.Interfaces
         /// </summary>
         /// <param name="orderId">Order identifier.</param>
         Task CancelOrderAsync(string orderId);
+
+        Task<IEnumerable<OrderResponse>> GetByAccountIdAsync(string accountId);
     }
 }

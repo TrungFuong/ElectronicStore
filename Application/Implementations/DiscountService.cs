@@ -20,7 +20,6 @@ namespace Application.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        // CREATE
         public async Task<bool> CreateDiscountAsync(CreateDiscountRequest request)
         {
             var count = await _unitOfWork.DiscountRepository.CountAsync();
@@ -47,7 +46,6 @@ namespace Application.Implementations
             return true;
         }
 
-        // READ
         public async Task<IEnumerable<DiscountResponse>> GetAllAsync()
         {
             var discounts = await _unitOfWork.DiscountRepository.GetAllAsync();
@@ -93,7 +91,6 @@ namespace Application.Implementations
             };
         }
 
-        // UPDATE
         public async Task<bool> UpdateDiscountAsync(UpdateDiscountRequest request)
         {
             var discount = await _unitOfWork.DiscountRepository.GetAsync(d => d.DiscountId == request.DiscountId);
@@ -116,7 +113,6 @@ namespace Application.Implementations
             return true;
         }
 
-        // DELETE
         public async Task<bool> DeleteDiscountAsync(string discountId)
         {
             var discount = await _unitOfWork.DiscountRepository.GetAsync(d => d.DiscountId == discountId);

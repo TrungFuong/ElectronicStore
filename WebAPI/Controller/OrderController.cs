@@ -3,6 +3,7 @@ using Application.DTOs.Responses;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -87,5 +88,15 @@ namespace API.Controllers
             await _orderService.CancelOrderAsync(request.Id);
             return Ok(new GeneralBoolResponse { Message = "Order cancelled" });
         }
+        [Authorize]
+        [HttpGet("my-orders")]
+        public async Task<IActionResult> GetMyOrders()
+        {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var orders = await _orderService.GetByAccountIdAsync(accountId);
+            return Ok(orders);
+        }
+
     }
 }

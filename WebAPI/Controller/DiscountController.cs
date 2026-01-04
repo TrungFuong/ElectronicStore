@@ -33,7 +33,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateDiscountRequest request)
         {
             var created = await _discountService.CreateDiscountAsync(request);
@@ -41,7 +41,7 @@ namespace API.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update([FromBody] UpdateDiscountRequest request)
         {
             var ok = await _discountService.UpdateDiscountAsync(request);
@@ -50,7 +50,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(string id)
         {
             var ok = await _discountService.DeleteDiscountAsync(id);

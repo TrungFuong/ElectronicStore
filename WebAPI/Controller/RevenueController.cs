@@ -8,6 +8,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/revenue")]
+    [Authorize(Roles = "Staff")]
     public class RevenueController : ControllerBase
     {
         private readonly IRevenueService _revenueService;
@@ -18,7 +19,6 @@ namespace API.Controllers
         }
 
        [HttpGet("day")]
-       [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetByDay([FromQuery] DateOnly day)
         {
             var total = await _revenueService.GetTotalRevenueByDayAsync(day);
@@ -26,11 +26,11 @@ namespace API.Controllers
         }
 
         [HttpGet("month")]
-        [Authorize(Roles = "Staff")]
+        
         public async Task<IActionResult> GetByMonth([FromQuery] int year, [FromQuery] int month)
         {
             var total = await _revenueService.GetTotalRevenueByMonthAsync(year, month);
             return Ok(new GeneralGetResponse { Data = new { Total = total } });
         }
-    }
+    }   
 }

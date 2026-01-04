@@ -11,6 +11,7 @@ using System.Security.Claims;
 
 namespace API.Controllers
 {
+    [Authorize ]
     [ApiController]
     [Route("api/categories")]
     public class CategoryController : ControllerBase

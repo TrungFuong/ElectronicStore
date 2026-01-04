@@ -6,5 +6,7 @@ namespace Domain.Interfaces
     public interface IOrderRepository : IGenericsRepository<Order>
     {
         Task<Order?> GetByIdWithDetailsAsync(string orderId);
+
+        Task<IEnumerable<Order>> GetByAccountIdAsync(string accountId);
     }
 }

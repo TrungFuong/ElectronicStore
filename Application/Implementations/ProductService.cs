@@ -36,7 +36,6 @@ namespace Application.Services
             return prefix + string.Format(Prefixes.ID_FORMAT, num);
         }
 
-        // ================= CREATE =================
         public async Task<bool> CreateProductAsync(CreateProductRequest request)
         {
             if (!request.Variations.Any())
@@ -68,9 +67,7 @@ namespace Application.Services
                     IsActive = request.IsActive ?? true
                 });
 
-                // -------- VARIATION + OPTION --------
 
-                // 🔹 LẤY VARIATION ID 1 LẦN
                 var lastVariationId = await GenerateIdAsync(
                     u => u.ProductVariationRepository,
                     x => x.VariationId,
@@ -79,7 +76,6 @@ namespace Application.Services
                 var variationIndex =
                     int.Parse(lastVariationId.Substring(Prefixes.VARIATION_ID_PREFIX.Length));
 
-                // 🔹 LẤY OPTION ID 1 LẦN
                 var lastOptionId = await GenerateIdAsync(
                     u => u.VariationOptionRepository,
                     o => o.OptionId,
@@ -90,7 +86,6 @@ namespace Application.Services
 
                 foreach (var v in request.Variations)
                 {
-                    // ===== CREATE VARIATION =====
                     variationIndex++;
 
                     var variationId = Prefixes.VARIATION_ID_PREFIX
@@ -105,7 +100,6 @@ namespace Application.Services
                             StockQuantity = v.StockQuantity
                         });
 
-                    // ===== CREATE OPTIONS =====
                     foreach (var opt in v.Options)
                     {
                         optionIndex++;
@@ -123,7 +117,6 @@ namespace Application.Services
                 }
 
 
-                // -------- SPECIFICATION --------
                 var lastSpecId = await GenerateIdAsync(
                     u => u.ProductSpecificationRepository,
                     s => s.SpecificationId,
@@ -144,7 +137,6 @@ namespace Application.Services
                         });
                 }
 
-                // -------- IMAGE --------
                 var lastImgId = await GenerateIdAsync(
                     u => u.ProductImageRepository,
                     i => i.ImageId,
@@ -170,7 +162,6 @@ namespace Application.Services
             return true;
         }
 
-        // ========================= READ =========================
         public async Task<IEnumerable<ProductResponse>> GetAllAsync()
         {
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
@@ -243,10 +234,8 @@ namespace Application.Services
             });
         }
 
-        // GET BY ID
         public async Task<ProductResponse?> GetByIdAsync(string productId)
         {
-            // 1️⃣ Lấy product + quan hệ cấp 1
             var product = await _unitOfWork.ProductRepository.GetAsync(
                 p => p.ProductId == productId,
                 p => p.Category,
@@ -257,24 +246,24 @@ namespace Application.Services
 
             if (product == null) return null;
 
-            // 2️⃣ Lấy variationIds
+            //  Lấy variationIds
             var variationIds = product.Variations
                 .Select(v => v.VariationId)
                 .ToList();
 
-            // 3️⃣ Lấy options
+            // Lấy options
             var options = await _unitOfWork.VariationOptionRepository
                 .GetAllAsync(o => variationIds.Contains(o.VariationId));
 
-            // 4️⃣ Lấy attributes
+            // Lấy attributes
             var attributes = await _unitOfWork.VariationAttributeRepository
                 .GetAllAsync();
 
-            // 5️⃣ Lấy specifications
+            // Lấy specifications
             var specs = await _unitOfWork.ProductSpecificationRepository
                 .GetAllAsync(s => s.ProductId == product.ProductId);
 
-            // 6️⃣ Map response
+            // Map response
             return new ProductResponse
             {
                 ProductId = product.ProductId,
@@ -328,7 +317,6 @@ namespace Application.Services
 
 
 
-        // ========================= UPDATE =========================
         public async Task<bool> UpdateProductAsync(UpdateProductRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.ProductId))
@@ -342,7 +330,6 @@ namespace Application.Services
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                /* ================= PRODUCT ================= */
                 bool productChanged = false;
 
                 if (request.ProductName != null)
@@ -382,7 +369,6 @@ namespace Application.Services
                     _unitOfWork.ProductRepository.Update(product);
                 }
 
-                /* ================= VARIATIONS ================= */
                 if (request.Variations != null && request.Variations.Any())
                 {
                     // Precompute last ids once to avoid duplicates generated by repeated DB reads
@@ -400,7 +386,6 @@ namespace Application.Services
 
                     foreach (var v in request.Variations)
                     {
-                        /* ========== DELETE VARIATION ========== */
                         if (v.IsDeleted && !string.IsNullOrWhiteSpace(v.VariationId))
                         {
                             var delVar = await _unitOfWork.ProductVariationRepository
@@ -420,7 +405,6 @@ namespace Application.Services
                             continue;
                         }
 
-                        /* ========== ADD / UPDATE VARIATION ========== */
                         ProductVariation ev;
                         bool isNewVariation = string.IsNullOrWhiteSpace(v.VariationId);
 
@@ -451,10 +435,8 @@ namespace Application.Services
                             _unitOfWork.ProductVariationRepository.Update(ev);
                         }
 
-                        /* ========== OPTIONS ========== */
                         foreach (var o in v.Options ?? Enumerable.Empty<UpdateVariationOptionRequest>())
                         {
-                            /* ===== DELETE OPTION ===== */
                             if (o.IsDeleted && !string.IsNullOrWhiteSpace(o.OptionId))
                             {
                                 var delOpt = await _unitOfWork.VariationOptionRepository
@@ -466,7 +448,6 @@ namespace Application.Services
                                 continue;
                             }
 
-                            /* ===== ADD OPTION ===== */
                             if (string.IsNullOrWhiteSpace(o.OptionId))
                             {
                                 optionIndex++;
@@ -484,7 +465,6 @@ namespace Application.Services
                                 continue;
                             }
 
-                            /* ===== UPDATE OPTION ===== */
                             var eo = await _unitOfWork.VariationOptionRepository
                                 .GetAsync(x => x.OptionId == o.OptionId);
 
@@ -498,7 +478,6 @@ namespace Application.Services
                     }
                 }
 
-                /* ================= SPECIFICATIONS ================= */
                 if (request.Specifications != null && request.Specifications.Any())
                 {
                     var existingSpecs = (await _unitOfWork.ProductSpecificationRepository
@@ -546,7 +525,6 @@ namespace Application.Services
                     }
                 }
 
-                /* ================= IMAGES ================= */
                 if (request.Images != null && request.Images.Any())
                 {
                     foreach (var img in request.Images)
@@ -595,10 +573,6 @@ namespace Application.Services
         }
 
 
-
-
-
-        // ========================= DELETE =========================
         public async Task<bool> DeleteProductAsync(string productId)
         {
             var product = await _unitOfWork.ProductRepository
@@ -612,7 +586,6 @@ namespace Application.Services
             return true;
         }
 
-        // ========================= FILTER =========================
         public async Task<IEnumerable<ProductCardResponse>> GetByCategoryAsync(string categoryId)
         {
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
@@ -663,17 +636,13 @@ namespace Application.Services
 
             var products = await _unitOfWork.ProductRepository.GetAllAsync(
                 p =>
-                    // 🔎 keyword
                     (string.IsNullOrEmpty(keyword) ||
                      EF.Functions.Like(p.ProductName, $"%{keyword}%"))
 
-                    // 📂 multi-category
                     && (categoryIds.Count == 0 || categoryIds.Contains(p.CategoryId))
 
-                    // 🏷 multi-brand
                     && (brandIds.Count == 0 || brandIds.Contains(p.BrandId))
 
-                    // 🚦 status
                     && (
                         status == "all" ||
                         (status == "active" && p.IsActive) ||
@@ -686,7 +655,6 @@ namespace Application.Services
                 p => p.Variations
             );
 
-            // ===== map giống GetAllAsync =====
             var variationIds = products
                 .SelectMany(p => p.Variations)
                 .Select(v => v.VariationId)

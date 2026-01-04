@@ -121,7 +121,6 @@ namespace Application.Implementations
             return true;
         }
 
-        // ---------- helpers ----------
         private async Task<Cart> GetOrCreateCart(string accountId)
         {
             var cart = await _uow.CartRepository.GetByAccountIdAsync(accountId);

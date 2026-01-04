@@ -19,10 +19,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] CreateCustomerRequest request)
         {
             var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var id = await _customerService.CreateAsync(request);
+            var id = await _customerService.CreateAsync(request, accountId);
             return Ok(new GeneralGetResponse { Data = new { CustomerId = id }, Message = "Customer created" });
         }
 
@@ -33,17 +34,32 @@ namespace API.Controllers
             var data = await _customerService.GetAllAsync();
             return Ok(new GeneralGetResponse { Data = data });
         }
-        [HttpGet("by-account/{accountId}")]
-        public async Task<IActionResult> GetByAccountId(string accountId)
+
+        [Authorize]
+        [HttpGet("by-account")]
+        public async Task<IActionResult> GetByAccountId()
         {
+            var accountId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(accountId))
+            {
+                return Unauthorized(new GeneralGetResponse
+                {
+                    Success = false,
+                    Message = "Khong xac dinh duoc nguoi dung"
+                });
+            }
+
             var customer = await _customerService.GetByAccountIdAsync(accountId);
 
             if (customer == null)
+            {
                 return NotFound(new GeneralGetResponse
                 {
                     Success = false,
                     Message = "Customer not found"
                 });
+            }
 
             return Ok(new GeneralGetResponse
             {

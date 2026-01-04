@@ -11,7 +11,6 @@ namespace Application.DTOs.Requests
 {
     public class UpdateProductRequest
     {
-        // ===== PRODUCT =====
         
         public string? ProductId { get; set; } 
         public string? ProductName { get; set; }
@@ -19,20 +18,15 @@ namespace Application.DTOs.Requests
         public decimal ProductPrice { get; set; }
         public string? CategoryId { get; set; }
         public string? BrandId { get; set; }
-        // Allow toggling active state in update
         public bool? IsActive { get; set; }
 
-        // ===== VARIATIONS =====
         public List<UpdateProductVariationRequest> Variations { get; set; } = new();
 
-        // ===== SPECIFICATIONS =====
         public List<UpdateProductSpecificationRequest> Specifications { get; set; } = new();
 
-        // ===== IMAGES =====
         public List<UpdateProductImageRequest> Images { get; set; } = new();
     }
 
-    // -------- VARIATION --------
     public class UpdateProductVariationRequest
     {
         public string? VariationId { get; set; }   // null = thêm mới

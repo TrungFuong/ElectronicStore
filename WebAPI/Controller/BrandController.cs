@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.Requests;
-using Application.Interfaces;
 using Application.DTOs.Responses;
+using Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/brands")]
+[Authorize(Roles = "Admin")]
 public class BrandController : ControllerBase
 {
     private readonly IBrandService _brandService;

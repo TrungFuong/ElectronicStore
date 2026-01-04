@@ -19,7 +19,7 @@ namespace Application.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<string> CreateAsync(CreateCustomerRequest request)
+        public async Task<string> CreateAsync(CreateCustomerRequest request, string accountId)
         {
             var count = await _unitOfWork.CustomerRepository.CountAsync();
             var customer = new Customer
@@ -30,7 +30,7 @@ namespace Application.Implementations
                 CustomerPhone = request.CustomerPhone,
                 CustomerAddress = request.CustomerAddress,
                 CustomerDOB = request.CustomerDOB,
-                AccountId = request.AccountId
+                AccountId = accountId
             };
             await _unitOfWork.CustomerRepository.AddAsync(customer);
             await _unitOfWork.CommitAsync();

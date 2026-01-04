@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Requests
 {
@@ -8,11 +8,7 @@ namespace Application.DTOs.Requests
         public string VariationId { get; set; } = null!;
 
         [Required]
-        [Range(1, int.MaxValue)]
+        [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải >= 1")]
         public int Quantity { get; set; }
-
-        [Required]
-        [Range(0, double.MaxValue)]
-        public decimal UnitPrice { get; set; }
     }
 }

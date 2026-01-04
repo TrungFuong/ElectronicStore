@@ -16,7 +16,6 @@ namespace Application.Implementations
 {
     public class AuthService : IAuthService
     {
-        //tự đọc về dependency injection
         private readonly IAccountRepository _accountRepo;
         private readonly ITokenService _tokenService;
         private readonly IPasswordHasher _passwordHasher;
@@ -45,7 +44,6 @@ namespace Application.Implementations
         {
             var account = await _accountRepo.GetByPhoneAsync(request.Phone);
 
-            //check tài khoản có tồn tại và đang hoạt động
             if (account == null || !account.IsActive)
             {
                 throw new Exception("Tài khoản không tồn tại hoặc đã bị vô hiệu hóa");

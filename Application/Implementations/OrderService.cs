@@ -1,4 +1,4 @@
-using Application.DTOs.Requests;
+﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Constants;
@@ -6,6 +6,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using System;
+using System.Linq;
 
 namespace Application.Implementations
 {
@@ -18,119 +19,139 @@ namespace Application.Implementations
             _unitOfWork = unitOfWork;
         }
 
+        private decimal CalculateDiscountAmount(Discount discount, decimal subtotal)
+        {
+            if (subtotal < discount.MinOrderValue)
+                return 0m;
+
+            decimal discountAmount = discount.DiscountType switch
+            {
+                EnumDiscountType.Percentage => subtotal * (discount.DiscountValue / 100m),
+                EnumDiscountType.FixedAmount => discount.DiscountValue,
+                EnumDiscountType.Freeshipping => 0m,
+                _ => 0m
+            };
+
+            if (discount.MaxDiscountAmount > 0 && discountAmount > discount.MaxDiscountAmount)
+                discountAmount = discount.MaxDiscountAmount;
+
+            return discountAmount > subtotal ? subtotal : discountAmount;
+        }
+
         public async Task<string> CreateOrderAsync(CreateOrderRequest request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
-            if (request.Items == null || !request.Items.Any()) throw new ArgumentException("Order must contain at least one item.");
+            if (!request.Items.Any())
+                throw new ArgumentException("Order must contain at least one item.");
 
-            decimal subtotal = request.Items.Sum(i => i.UnitPrice * i.Quantity);
+            decimal subtotal = 0m;
             decimal discountAmount = 0m;
 
-            // discount logic omitted intentionally; leave hooks here to query discount repository later
-            var orderId = Prefixes.ORDER_ID_PREFIX + string.Format(Prefixes.ID_FORMAT, await _unitOfWork.OrderRepository.CountAsync() + 1);
+            var orderId = Prefixes.ORDER_ID_PREFIX +
+                          string.Format(Prefixes.ID_FORMAT,
+                          await _unitOfWork.OrderRepository.CountAsync() + 1);
 
             var order = new Order
             {
                 OrderId = orderId,
                 OrderStatus = EnumOrderStatus.Pending,
-                SubTotal = subtotal,
-                DiscountAmount = discountAmount,
-                Total = subtotal - discountAmount,
                 ShippingAddress = request.ShippingAddress,
+                ReceiverName = request.ReceiverName,
+                ReceiverPhone = request.ReceiverPhone,
                 Note = request.Note ?? string.Empty,
                 CreatedAt = DateOnly.FromDateTime(DateTime.Now),
                 UpdatedAt = DateOnly.FromDateTime(DateTime.Now),
                 CustomerId = request.CustomerId
             };
 
-            foreach (var item in request.Items)
-            {
-                var od = new OrderDetail
-                {
-                    OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid().ToString(),
-                    OrderId = orderId,
-                    VariationId = item.VariationId,
-                    UnitPrice = item.UnitPrice,
-                    Quantity = item.Quantity,
-                    DiscountAmount = 0m,
-                    Total = item.UnitPrice * item.Quantity
-                };
-                order.OrderDetails.Add(od);
-            }
-
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
+                foreach (var item in request.Items)
+                {
+                    var variation = await _unitOfWork.ProductVariationRepository
+                        .GetAsync(v => v.VariationId == item.VariationId)
+                        ?? throw new InvalidOperationException($"Variation not found: {item.VariationId}");
+
+                    if (variation.StockQuantity < item.Quantity)
+                        throw new InvalidOperationException("Insufficient stock");
+
+                    var unitPrice = variation.Price;
+                    var lineTotal = unitPrice * item.Quantity;
+
+                    subtotal += lineTotal;
+
+                    order.OrderDetails.Add(new OrderDetail
+                    {
+                        OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid(),
+                        OrderId = orderId,
+                        VariationId = item.VariationId,
+                        Quantity = item.Quantity,
+                        UnitPrice = unitPrice,
+                        DiscountAmount = 0m,
+                        Total = lineTotal
+                    });
+                }
+
+                if (!string.IsNullOrWhiteSpace(request.DiscountId))
+                {
+                    var discount = await _unitOfWork.DiscountRepository
+                        .GetAsync(d => d.DiscountId == request.DiscountId && d.IsActive)
+                        ?? throw new InvalidOperationException("Discount not found or inactive");
+
+                    if (DateTime.Now < discount.StartDate || DateTime.Now > discount.ExpireDate)
+                        throw new InvalidOperationException("Discount expired");
+
+                    if (discount.UsageLimit > 0 && discount.UsageCount >= discount.UsageLimit)
+                        throw new InvalidOperationException("Discount usage limit reached");
+
+                    discountAmount = CalculateDiscountAmount(discount, subtotal);
+
+                    discount.UsageCount++;
+                    _unitOfWork.DiscountRepository.Update(discount);
+
+                    order.DiscountUsages.Add(new DiscountUsage
+                    {
+                        DiscountId = discount.DiscountId,
+                        OrderId = orderId,
+                        UsedAt = DateTime.Now
+                    });
+                }
+
+                order.SubTotal = subtotal;
+                order.DiscountAmount = discountAmount;
+                order.Total = subtotal - discountAmount;
+
                 await _unitOfWork.OrderRepository.AddAsync(order);
             });
 
             return orderId;
         }
 
+        
         public async Task<IEnumerable<OrderResponse>> GetAllAsync()
         {
             var orders = await _unitOfWork.OrderRepository.GetAllAsync(
                 null,
-                o => o.OrderDetails,
-                o => o.Payments,
-                o => o.DiscountUsages
+                o => o.OrderDetails
             );
 
-            return orders.Select(o => new OrderResponse
-            {
-                OrderId = o.OrderId,
-                OrderStatus = (int)o.OrderStatus,
-                SubTotal = o.SubTotal,
-                DiscountAmount = o.DiscountAmount,
-                Total = o.Total,
-                ShippingAddress = o.ShippingAddress,
-                Note = o.Note,
-                CreatedAt = o.CreatedAt,
-                UpdatedAt = o.UpdatedAt,
-                CustomerId = o.CustomerId,
-                Items = o.OrderDetails?.Select(od => new OrderItemResponse
-                {
-                    VariationId = od.VariationId,
-                    Quantity = od.Quantity,
-                    UnitPrice = od.UnitPrice,
-                    DiscountAmount = od.DiscountAmount,
-                    Total = od.Total
-                }) ?? Array.Empty<OrderItemResponse>()
-            });
+            return orders.Select(o => MapToResponse(o));
         }
 
+        
         public async Task<OrderResponse?> GetByIdAsync(string orderId)
         {
-            var o = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(orderId);
-            if (o == null) return null;
-            return new OrderResponse
-            {
-                OrderId = o.OrderId,
-                OrderStatus = (int)o.OrderStatus,
-                SubTotal = o.SubTotal,
-                DiscountAmount = o.DiscountAmount,
-                Total = o.Total,
-                ShippingAddress = o.ShippingAddress,
-                Note = o.Note,
-                CreatedAt = o.CreatedAt,
-                UpdatedAt = o.UpdatedAt,
-                CustomerId = o.CustomerId,
-                Items = o.OrderDetails?.Select(od => new OrderItemResponse
-                {
-                    VariationId = od.VariationId,
-                    Quantity = od.Quantity,
-                    UnitPrice = od.UnitPrice,
-                    DiscountAmount = od.DiscountAmount,
-                    Total = od.Total
-                }) ?? Array.Empty<OrderItemResponse>()
-            };
+            var order = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(orderId);
+            return order == null ? null : MapToResponse(order);
         }
 
+        
         public async Task<bool> UpdateOrderAsync(UpdateOrderRequest request)
         {
             var order = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(request.OrderId);
             if (order == null) return false;
 
-            if (order.OrderStatus == EnumOrderStatus.Delivered || order.OrderStatus == EnumOrderStatus.Cancelled)
+            if (order.OrderStatus is EnumOrderStatus.Delivered or EnumOrderStatus.Cancelled)
                 throw new InvalidOperationException("Cannot update delivered or cancelled order.");
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
@@ -139,27 +160,34 @@ namespace Application.Implementations
                 order.Note = request.Note ?? order.Note;
                 order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
 
-                if (request.Items != null && request.Items.Any())
+                if (request.Items.Any())
                 {
-                    // remove current details and add new ones
-                    // since OrderDetails are owned by Order, replace collection
                     order.OrderDetails.Clear();
                     decimal subtotal = 0m;
+
                     foreach (var item in request.Items)
                     {
-                        var od = new OrderDetail
+                        var variation = await _unitOfWork.ProductVariationRepository
+                            .GetAsync(v => v.VariationId == item.VariationId)
+                            ?? throw new InvalidOperationException("Variation not found");
+
+                        var unitPrice = variation.Price;
+                        var total = unitPrice * item.Quantity;
+
+                        subtotal += total;
+
+                        order.OrderDetails.Add(new OrderDetail
                         {
-                            OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid().ToString(),
+                            OrderDetailId = Prefixes.ORDER_ID_PREFIX + Guid.NewGuid(),
                             OrderId = order.OrderId,
                             VariationId = item.VariationId,
-                            UnitPrice = item.UnitPrice,
                             Quantity = item.Quantity,
+                            UnitPrice = unitPrice,
                             DiscountAmount = 0m,
-                            Total = item.UnitPrice * item.Quantity
-                        };
-                        order.OrderDetails.Add(od);
-                        subtotal += od.Total;
+                            Total = total
+                        });
                     }
+
                     order.SubTotal = subtotal;
                     order.Total = subtotal - order.DiscountAmount;
                 }
@@ -170,6 +198,7 @@ namespace Application.Implementations
             return true;
         }
 
+        
         public async Task<bool> DeleteOrderAsync(string orderId)
         {
             var order = await _unitOfWork.OrderRepository.GetAsync(o => o.OrderId == orderId);
@@ -183,21 +212,26 @@ namespace Application.Implementations
             return true;
         }
 
+        
         public async Task ConfirmOrderAsync(string orderId)
         {
-            if (string.IsNullOrWhiteSpace(orderId)) throw new ArgumentException(nameof(orderId));
-            var order = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(orderId);
-            if (order == null) throw new InvalidOperationException("Order not found");
-            if (order.OrderStatus != EnumOrderStatus.Pending) throw new InvalidOperationException("Only pending orders can be confirmed");
+            var order = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(orderId)
+                ?? throw new InvalidOperationException("Order not found");
+
+            if (order.OrderStatus != EnumOrderStatus.Pending)
+                throw new InvalidOperationException("Only pending orders can be confirmed");
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                // check and deduct stock from variations
                 foreach (var od in order.OrderDetails)
                 {
-                    var variation = await _unitOfWork.ProductVariationRepository.GetAsync(v => v.VariationId == od.VariationId);
-                    if (variation == null) throw new InvalidOperationException($"Variation not found: {od.VariationId}");
-                    if (variation.StockQuantity < od.Quantity) throw new InvalidOperationException($"Insufficient stock for variation {variation.VariationId}");
+                    var variation = await _unitOfWork.ProductVariationRepository
+                        .GetAsync(v => v.VariationId == od.VariationId)
+                        ?? throw new InvalidOperationException("Variation not found");
+
+                    if (variation.StockQuantity < od.Quantity)
+                        throw new InvalidOperationException("Insufficient stock");
+
                     variation.StockQuantity -= od.Quantity;
                     _unitOfWork.ProductVariationRepository.Update(variation);
                 }
@@ -210,39 +244,36 @@ namespace Application.Implementations
 
         public async Task ShipOrderAsync(string orderId)
         {
-            if (string.IsNullOrWhiteSpace(orderId)) throw new ArgumentException(nameof(orderId));
+            var order = await _unitOfWork.OrderRepository.GetAsync(o => o.OrderId == orderId)
+                ?? throw new InvalidOperationException("Order not found");
 
-            await _unitOfWork.ExecuteInTransactionAsync(async () =>
-            {
-                var order = await _unitOfWork.OrderRepository.GetAsync(o => o.OrderId == orderId);
-                if (order == null) throw new InvalidOperationException("Order not found");
-                if (order.OrderStatus != EnumOrderStatus.Shipped) throw new InvalidOperationException("Order must be in shipped state to mark delivered");
-                order.OrderStatus = EnumOrderStatus.Delivered;
-                order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
-                _unitOfWork.OrderRepository.Update(order);
-            });
+            if (order.OrderStatus != EnumOrderStatus.Shipped)
+                throw new InvalidOperationException("Invalid order state");
+
+            order.OrderStatus = EnumOrderStatus.Delivered;
+            order.UpdatedAt = DateOnly.FromDateTime(DateTime.Now);
+            _unitOfWork.OrderRepository.Update(order);
         }
 
         public async Task CancelOrderAsync(string orderId)
         {
-            if (string.IsNullOrWhiteSpace(orderId)) throw new ArgumentException(nameof(orderId));
-            var order = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(orderId);
-            if (order == null) throw new InvalidOperationException("Order not found");
-            if (order.OrderStatus == EnumOrderStatus.Delivered) throw new InvalidOperationException("Cannot cancel delivered order");
+            var order = await _unitOfWork.OrderRepository.GetByIdWithDetailsAsync(orderId)
+                ?? throw new InvalidOperationException("Order not found");
+
+            if (order.OrderStatus == EnumOrderStatus.Delivered)
+                throw new InvalidOperationException("Cannot cancel delivered order");
 
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                // restore stock if it was already deducted
-                if (order.OrderStatus == EnumOrderStatus.Shipped || order.OrderStatus == EnumOrderStatus.Pending)
+                foreach (var od in order.OrderDetails)
                 {
-                    foreach (var od in order.OrderDetails)
+                    var variation = await _unitOfWork.ProductVariationRepository
+                        .GetAsync(v => v.VariationId == od.VariationId);
+
+                    if (variation != null)
                     {
-                        var variation = await _unitOfWork.ProductVariationRepository.GetAsync(v => v.VariationId == od.VariationId);
-                        if (variation != null)
-                        {
-                            variation.StockQuantity += od.Quantity;
-                            _unitOfWork.ProductVariationRepository.Update(variation);
-                        }
+                        variation.StockQuantity += od.Quantity;
+                        _unitOfWork.ProductVariationRepository.Update(variation);
                     }
                 }
 
@@ -251,5 +282,71 @@ namespace Application.Implementations
                 _unitOfWork.OrderRepository.Update(order);
             });
         }
+
+        public async Task<IEnumerable<OrderResponse>> GetByAccountIdAsync(string accountId)
+        {
+            if (string.IsNullOrWhiteSpace(accountId))
+                throw new ArgumentException(nameof(accountId));
+
+            var orders = await _unitOfWork.OrderRepository.GetByAccountIdAsync(accountId);
+
+            return orders.Select(o => new OrderResponse
+            {
+                OrderId = o.OrderId,
+                OrderStatus = o.OrderStatus,
+
+                ShippingAddress = o.ShippingAddress,
+                ReceiverName = o.ReceiverName,
+                ReceiverPhone = o.ReceiverPhone,
+
+                SubTotal = o.SubTotal,
+                DiscountAmount = o.DiscountAmount,
+                Total = o.Total,
+
+                Note = o.Note,
+                CreatedAt = o.CreatedAt,
+                UpdatedAt = o.UpdatedAt,
+
+                CustomerId = o.CustomerId,
+
+                Items = o.OrderDetails.Select(od => new OrderItemResponse
+                {
+                    VariationId = od.VariationId,
+                    ProductName = od.Variation.Product.ProductName,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    DiscountAmount = od.DiscountAmount,
+                    Total = od.Total
+                }).ToList()
+            });
+        }
+
+
+        private static OrderResponse MapToResponse(Order o) => new()
+        {
+            OrderId = o.OrderId,
+            OrderStatus = o.OrderStatus,
+            SubTotal = o.SubTotal,
+            DiscountAmount = o.DiscountAmount,
+            Total = o.Total,
+            ShippingAddress = o.ShippingAddress,
+            ReceiverName = o.ReceiverName,
+            ReceiverPhone = o.ReceiverPhone,
+            Note = o.Note,
+            CreatedAt = o.CreatedAt,
+            UpdatedAt = o.UpdatedAt,
+            CustomerId = o.CustomerId,
+            Items = o.OrderDetails
+                .Select(od => new OrderItemResponse
+                {
+                    VariationId = od.VariationId,
+                    ProductName = od.Variation.Product.ProductName,
+                    Quantity = od.Quantity,
+                    UnitPrice = od.UnitPrice,
+                    DiscountAmount = od.DiscountAmount,
+                    Total = od.Total
+                })
+                .ToList()
+        };
     }
 }

@@ -19,9 +19,28 @@ namespace Infrastructure.Repositories
             return await _context.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Variation)
+                        .ThenInclude(v => v.Product)
+                            .ThenInclude(p => p.Images)
+
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Variation)
+                        .ThenInclude(v => v.Options)
+
                 .Include(o => o.DiscountUsages)
                 .Include(o => o.Payments)
+
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
+        }
+        public async Task<IEnumerable<Order>> GetByAccountIdAsync(string accountId)
+        {
+            return await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Variation)
+                        .ThenInclude(v => v.Product)
+                .Where(o => o.Customer.AccountId == accountId)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
         }
     }
 }

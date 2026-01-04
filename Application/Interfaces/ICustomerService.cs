@@ -7,7 +7,7 @@ namespace Application.Interfaces
 {
     public interface ICustomerService
     {
-        Task<string> CreateAsync(CreateCustomerRequest request);
+        Task<string> CreateAsync(CreateCustomerRequest request, string accountId);
         Task<IEnumerable<CustomerResponse>> GetAllAsync();
         Task<CustomerResponse?> GetByIdAsync(string customerId);
         Task<bool> UpdateAsync(UpdateCustomerRequest request);

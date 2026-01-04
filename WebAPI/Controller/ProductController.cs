@@ -18,7 +18,6 @@ namespace API.Controllers
             _productService = productService;
         }
 
-        // CREATE FULL PRODUCT (product + variations + specs + images)
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
         {
@@ -31,7 +30,6 @@ namespace API.Controllers
             });
         }
 
-        // GET ALL PRODUCTS
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -45,7 +43,6 @@ namespace API.Controllers
             });
         }
 
-        // GET PRODUCT BY ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
@@ -67,7 +64,6 @@ namespace API.Controllers
             });
         }
 
-        // UPDATE PRODUCT INFO
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] UpdateProductRequest request)
         {
@@ -90,7 +86,6 @@ namespace API.Controllers
             });
         }
 
-        // SOFT DELETE PRODUCT
         [HttpDelete("{id}")]
         [Authorize(Roles = "Staff")]
         public async Task<IActionResult> Delete(string id)
@@ -113,7 +108,6 @@ namespace API.Controllers
             });
         }
 
-        // GET PRODUCTS BY CATEGORY
         [HttpGet("category/{categoryId}")]
         public async Task<IActionResult> GetByCategory(string categoryId)
         {
@@ -127,7 +121,6 @@ namespace API.Controllers
             });
         }
 
-        // GET PRODUCTS BY BRAND
         [HttpGet("brand/{brandId}")]
         public async Task<IActionResult> GetByBrand(string brandId)
         {
@@ -140,26 +133,7 @@ namespace API.Controllers
                 Data = products
             });
         }
-        [HttpPost("upload")]
-        public async Task<IActionResult> UploadImage(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("File is empty");
 
-            var ext = Path.GetExtension(file.FileName);
-            var fileName = Guid.NewGuid() + ext;
-
-            var folder = Path.Combine("wwwroot/images/products");
-            Directory.CreateDirectory(folder);
-
-            var path = Path.Combine(folder, fileName);
-            using var stream = new FileStream(path, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            var url = $"{Request.Scheme}://{Request.Host}/images/products/{fileName}";
-
-            return Ok(new { imageUrl = url });
-        }
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] ProductSearchRequest request)
         {
